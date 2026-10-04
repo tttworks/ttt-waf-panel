@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# ttt-waf-panel - 为 WordPress 服务器打造的 nginx 层 WAF + 安全运营面板
+#
+# Copyright 2026 TTTWorks (Aloysius Luo)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """系统安全巡检 · 定制安全运维面板
 检查系统级安全状态（不扫描文件内容，只做状态巡检）：
   关键软件版本 / 待装安全更新 / SSH 配置风险 / 开放端口 / fail2ban / rootkit 常见痕迹

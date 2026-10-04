@@ -1,5 +1,22 @@
 <?php
 /**
+ * ttt-waf-panel - 为 WordPress 服务器打造的 nginx 层 WAF + 安全运营面板
+ *
+ * Copyright 2026 TTTWorks (Aloysius Luo)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
  * 定制安全运维面板 API
  * 品牌：TTTWorks · 作者：Aloysius Luo
  * 数据源：requests 表（ingest.py 填充）+ rules 配置（nginx 文件）
@@ -12,7 +29,7 @@ $PANEL_PRODUCT = '定制安全运维面板';
 $PANEL_BRAND   = 'TTTWorks';
 $PANEL_AUTHOR  = 'Aloysius Luo';
 
-// 服务器标识（可选项）：按台账编号填如 'server 5'；留空则自动用本机 IP（SERVER_ADDR）
+// 服务器标识（可选项）：填内部编号如 'server 1'；留空则自动用本机 IP（SERVER_ADDR）
 // 服务器标识（通用版 v1.3.1）：优先读 server_identity.json（含 no/ip），未配置则自动用主机名 + SERVER_ADDR
 $_srv_idf = @json_decode(@file_get_contents('/www/wwwroot/wafpanel/server_identity.json'), true) ?: [];
 $SERVER_NO  = $_srv_idf['no'] ?? '';
