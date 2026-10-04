@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>登录 · 定制安全运维面板</title>
+<title>登录 · 超方 WAF 防火墙 · 安全运营面板</title>
 <style>
 :root{--primary:#343ced;--bg:#f5f6fa;--card:#fff;--border:#e5e7eb;--muted:#6b7280;--red:#ff492c}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -130,14 +130,14 @@ button{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;
 </head>
 <body>
 <div class="box">
-  <h1>🛡️ 定制安全运维面板</h1>
+  <h1>🛡️ 超方 WAF 防火墙 · 安全运营面板</h1>
   <div class="sub">登录以查看运维状态</div>
   <?php if ($err): ?><div class="err"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <form method="post" autocomplete="on">
     <input type="password" name="password" placeholder="访问密码" required autofocus>
     <button type="submit">登 录</button>
   </form>
-  <div class="foot">TTTWorks · 定制安全运维面板</div>
+  <div class="foot">超方 WAF 防火墙 · 安全运营面板</div>
 </div>
 </body>
 </html>

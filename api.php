@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 /**
- * 定制安全运维面板 API
+ * 超方 WAF 防火墙 · 安全运营面板 API
  * 品牌：TTTWorks · 作者：Aloysius Luo
  * 数据源：requests 表（ingest.py 填充）+ rules 配置（nginx 文件）
  */
@@ -25,7 +25,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 // 面板版本号与作者信息（页头/页脚显示 version；author 等仅接口返回，不前台展示）
 $PANEL_VERSION = '1.4.1';
-$PANEL_PRODUCT = '定制安全运维面板';
+$PANEL_PRODUCT = '超方 WAF 防火墙 · 安全运营面板';
 $PANEL_BRAND   = 'TTTWorks';
 $PANEL_AUTHOR  = 'Aloysius Luo';
 
