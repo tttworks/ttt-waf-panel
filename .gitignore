@@ -1,0 +1,48 @@
+# ===== 运行时数据（含真实流量与站点信息，绝不要提交）=====
+waf.db
+*.sqlite
+*.sqlite3
+offsets*.json
+*.log
+
+# 面板运行时生成的状态文件
+site_status.json
+waf_sites_status.json
+fail2ban_status.json
+hotlink_status.json
+hotlink_request.json
+scan_status.json
+scan_baseline.json
+scan_whitelist.json
+sys_check.json
+vuln_scan.json
+vuln_scan_request
+vulns.json
+wpscan_usage.json
+wpscan_token.json
+login_log.json
+login_log.txt
+login_log_offset.json
+.reload_nginx
+
+# 凭据 / 会话
+panel.passwd
+sessions/
+
+# 本机配置（每台不同；模板见 *.example.*）
+server_identity.json
+site_alias.json
+
+# ===== 需自行下载的数据（许可原因，不随仓库分发）=====
+GeoLite2-City.mmdb
+lib/china.json
+lib/world_cn.json
+data/*.mmdb
+
+# ===== 语言 / 编辑器 =====
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

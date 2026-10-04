@@ -1,0 +1,7 @@
+{
+    "_comment": "站点显示别名：目录名 -> 公网域名。当 WP 目录名与公网域名不一致时（Hostinger 的 public_html 布局、镜像站、目录名带测试后缀等），面板会把它当成两个站，用这张表归一。用法：复制本文件为 site_alias.json 然后按需修改（site_alias.json 已在 .gitignore 中，不会被提交）。",
+    "_example": {
+        "my-site-staging.example.com": "www.example.com",
+        "blog": "www.example.com"
+    }
+}

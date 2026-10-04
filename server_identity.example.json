@@ -1,0 +1,5 @@
+{
+    "_comment": "本机标识：面板页眉与接口显示用。复制本文件为 server_identity.json 后按实际填写（server_identity.json 已在 .gitignore 中）。若未配置，面板会自动回退为「主机名（IP）」。",
+    "no": "server 1",
+    "ip": "203.0.113.10"
+}

@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="TTTWorks · Aloysius Luo">
+<meta name="generator" content="定制安全运维面板 v1.1.0">
+<title>定制安全运维面板</title>
+<script src="/lib/echarts.min.js"></script>
+
+<style>
+:root{
+  --primary:#343ced; --primary-soft:#eef0ff; --bg:#f5f6fa; --card:#fff;
+  --text:#1a1a2e; --muted:#6b7280; --border:#e5e7eb;
+  --green:#1d9e75; --red:#ff492c; --amber:#ff7e4c; --purple:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:18px;font-weight:700}
+header .sub{color:var(--muted);font-size:13px}
+.nav-tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.nav-tab{padding:7px 16px;border-radius:8px;cursor:pointer;font-size:14px;border:1px solid transparent;background:transparent;color:var(--muted);text-decoration:none}
+.nav-tab.active{background:var(--primary);color:#fff;font-weight:600}
+.srv{position:relative;cursor:help;display:inline-block;border-bottom:1px dashed #94a3b8}
+.srv .tip{display:none;position:absolute;bottom:160%;left:0;background:#0f172a;color:#e2e8f0;padding:8px 14px;border-radius:8px;font-size:12px;white-space:nowrap;z-index:70;box-shadow:0 6px 16px rgba(0,0,0,.25);font-weight:400}
+.srv:hover .tip{display:block}
+.ver{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--primary-soft);color:var(--primary);font-size:12px;font-weight:600;vertical-align:middle;margin-left:6px}
+.page{display:none;padding:24px;max-width:1500px;margin:0 auto}
+.page.active{display:block}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border)}
+.kpi .label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.kpi .value{font-size:26px;font-weight:700}
+.kpi .value.red{color:var(--red)} .kpi .value.green{color:var(--green)} .kpi .value.amber{color:var(--amber)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.card{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border)}
+.card h3{font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.filters{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.filters select,.filters input{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+.filters button{padding:7px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px}
+.btn{padding:7px 16px;border-radius:999px;cursor:pointer;font-size:14px;border:1px solid var(--border);background:#fff;color:#000;transition:all .15s}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn.active{background:var(--primary);color:#fff;border-color:var(--primary);border-radius:999px;font-weight:600}
+/* 时间筛选在 .filters 内，需覆盖 .filters button（蓝底白字圆角方形）的更高优先级 */
+.filters .btn{background:#fff;color:#000;border-radius:999px;border:1px solid var(--border)}
+.filters .btn:hover{border-color:var(--primary);color:var(--primary)}
+.filters .btn.active{background:var(--primary);color:#fff;border-color:var(--primary);border-radius:999px;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--primary-soft);color:var(--primary);text-align:left;padding:9px 12px;position:sticky;top:0;z-index:1}
+td{padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover{background:#f9fafb}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;white-space:nowrap;max-width:280px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.tag.blk-ua{background:#fee2e2;color:#b91c1c}
+.tag.blk-uri{background:#fee2e2;color:#b91c1c}
+.tag.wl{background:#d1fae5;color:#065f46}
+.tag.none{background:#e5e7eb;color:#374151}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.chart{width:100%;height:400px}
+.chart-sm{width:100%;height:300px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:13px}
+.bar-row .name{width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.bar-row .bar{flex:1;min-width:0;background:var(--border);border-radius:4px;height:16px;overflow:hidden}
+.bar-row .fill{height:100%;background:var(--primary);border-radius:4px}
+.bar-row .cnt{width:55px;text-align:right;font-weight:600}
+.ip-item{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:13px}
+.ip-item .ip{font-family:ui-monospace,Menlo,monospace;font-size:12px;width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip-item .geo{color:var(--muted);font-size:12px;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip-item .bar{flex:1;background:var(--border);border-radius:4px;height:14px;overflow:hidden}
+.ip-item .fill{height:100%;background:var(--primary);border-radius:4px}
+.ip-item .cnt{width:50px;text-align:right;font-weight:600}
+.rule-form{background:#fafbfc;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px}
+.rule-form label{display:block;font-size:13px;color:var(--muted);margin:8px 0 4px}
+.rule-form input,.rule-form select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;width:100%;font-size:14px}
+.rule-form .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;background:var(--primary-soft);padding:10px;border-radius:8px}
+.rule-form button{margin-top:10px;padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer}
+.msg{padding:8px 14px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
+.msg.ok{background:#d1fae5;color:#065f46;display:block}
+.msg.err{background:#fee2e2;color:#b91c1c;display:block}
+.pager{display:flex;gap:10px;align-items:center;margin-top:12px;justify-content:flex-end}
+.pager button{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer}
+.pager button:disabled{opacity:0.4;cursor:not-allowed}
+.pager .info{color:var(--muted);font-size:13px}
+.map-tabs{display:flex;gap:8px;margin-bottom:14px}
+.map-note{font-size:12px;color:var(--muted);margin-top:8px;padding:8px;background:#f8f9fa;border-radius:6px;border-left:3px solid var(--primary)}
+.site-footer{padding:16px 24px;text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--border);background:var(--card);margin-top:8px}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal{background:var(--card);border-radius:14px;padding:20px 24px;width:min(920px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:82vh;display:flex;flex-direction:column}
+.modal table{width:100%}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.grid,.grid2{grid-template-columns:1fr}}
+.menu-btn{display:none;margin-left:auto;background:var(--card);border:1px solid var(--primary);color:var(--primary);border-radius:8px;padding:6px 11px;font-size:18px;cursor:pointer;line-height:1}
+.drawer{position:fixed;top:0;left:0;bottom:0;z-index:60;width:min(78vw,280px);background:var(--card);box-shadow:2px 0 14px rgba(0,0,0,.14);transform:translateX(-105%);transition:transform .24s ease;padding:16px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.drawer.open{transform:translateX(0)}
+.drawer a{padding:12px 14px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;white-space:nowrap}
+.drawer a:hover{background:var(--primary-soft);color:var(--primary)}
+.drawer-backdrop{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:.2s}
+.drawer-backdrop.open{opacity:1;visibility:visible}
+body.menu-open{overflow:hidden}
+@media(max-width:1024px){ .grid,.grid2,.grid3,.wpopt{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:767px){
+  .nav-tabs{display:none}
+  .menu-btn{display:inline-block}
+  header .sub{display:none}
+  .map-tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .map-tabs::-webkit-scrollbar{display:none}
+  .map-tabs .btn{flex-shrink:0}
+  .page{padding:15px}
+  #mapBox{height:320px!important}
+  #mapChart{height:320px!important}
+  .kpis{grid-template-columns:repeat(2,1fr)!important}
+  #ringRow,#ovRingRow{grid-template-columns:repeat(2,1fr)!important}
+  #sysGrid{grid-template-columns:1fr!important}
+  html,body{overflow-x:clip;overflow-wrap:break-word}
+  .card,.page,.grid,.grid2,.grid3,.kpis{min-width:0}
+  .tag{white-space:nowrap}
+  .filters{flex-wrap:wrap;gap:6px}
+  .filters .refresh-btn, .filters [id$="Time"]{margin-top:20px}
+  .ip-item .ip{width:auto;max-width:100px;flex-shrink:0}
+  .ip-item .geo{width:70px;flex-shrink:0;font-size:11px}
+  table{display:block;overflow-x:auto;white-space:nowrap}
+  header{flex-wrap:wrap;gap:8px}
+  .hero-inner{grid-template-columns:1fr}
+  .site-footer{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  .combo-body ul{overflow-wrap:break-word}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="#/overview" style="color:inherit;text-decoration:none">🛡️ 安全运营面板</a><span class="ver" id="panelVer"></span></h1>
+  <span class="sub" id="subInfo">-</span>
+  <span class="sub" style="color:var(--green);font-weight:600;white-space:nowrap" id="upTime">⏱ 已运行 --</span>
+  <nav class="nav-tabs">
+    <a class="nav-tab" href="#/overview">概览</a>
+    <a class="nav-tab" href="#/sites">站点</a>
+    <a class="nav-tab" href="#/map">地图</a>
+    <a class="nav-tab" href="#/detail">拦截明细</a>
+    <a class="nav-tab" href="#/rules">规则管理</a>
+    <a class="nav-tab" href="#/security">安全检测</a>
+    <a class="nav-tab" href="#/optim">优化状态</a>
+    <button class="btn" onclick="showLoginLog()" title="管理员登录记录" style="margin-left:6px">🕒 记录</button>
+    <a class="btn" href="/login.php?logout" title="退出登录">🚪 退出</a>
+  </nav>
+  <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="打开菜单" aria-expanded="false">☰</button>
+</header>
+
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeMenu()"></div>
+<nav class="drawer" id="drawer" aria-label="菜单">
+  <div style="font-size:16px;font-weight:700;padding:12px 14px;border-bottom:1px solid var(--border);margin-bottom:8px">🛡️ 安全运营面板</div>
+  <div id="drawerSrv" style="font-size:12px;color:var(--muted);padding:2px 14px 8px;word-break:break-all">-</div>
+  <div id="drawerUp" style="font-size:12px;color:var(--green);font-weight:600;padding:0 14px 10px;border-bottom:1px solid var(--border);margin-bottom:8px">⏱ 已运行 --</div>
+  <a href="#/overview" onclick="closeMenu()">概览</a>
+  <a href="#/sites" onclick="closeMenu()">站点</a>
+  <a href="#/map" onclick="closeMenu()">地图</a>
+  <a href="#/detail" onclick="closeMenu()">拦截明细</a>
+  <a href="#/rules" onclick="closeMenu()">规则管理</a>
+  <a href="#/security" onclick="closeMenu()">安全检测</a>
+  <a href="#/optim" onclick="closeMenu()">优化状态</a>
+  <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
+    <a href="/login.php?logout" onclick="closeMenu()" style="color:var(--red)">🚪 退出登录</a>
+  </div>
+</nav>
+<!-- ===== 概览页 ===== -->
+<div class="page" id="page-overview">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">概览 · 防火墙流量看板</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">防火墙拦截与放行、请求趋势与来源国家，网站安全态势一目了然。</p>
+  </div>
+<div class="filters">
+    <select id="ovSite"><option value="">全部站点</option></select>
+    <div class="map-tabs" style="margin:0" id="ovRangeTabs">
+      <button class="btn" onclick="setRange('ov','1h',this)">1小时</button>
+      <button class="btn active" onclick="setRange('ov','24h',this)">24h</button>
+      <button class="btn" onclick="setRange('ov','48h',this)">48h</button>
+      <button class="btn" onclick="setRange('ov','7d',this)">7天</button>
+      <button class="btn" onclick="setRange('ov','month',this)">月</button>
+      <button class="btn" onclick="setRange('ov','year',this)">年</button>
+      <button class="btn" onclick="setRange('ov','all',this)">全部</button>
+    </div>
+    <button class="refresh-btn" onclick="loadOverview()">刷新</button>
+    <span style="color:var(--muted);font-size:13px" id="ovTime"></span>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <h3><span class="dot" style="background:var(--green)"></span>服务器概览</h3>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;overflow-wrap:break-word" id="ovServerName">-</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:6px" id="ovRingRow"></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">总请求</div><div class="value" id="kTotal">-</div></div>
+    <div class="kpi"><div class="label">WAF拦截</div><div class="value red" id="kBlocked">-</div></div>
+    <div class="kpi"><div class="label">白名单放行</div><div class="value green" id="kWhite">-</div></div>
+    <div class="kpi"><div class="label">正常放行</div><div class="value" id="kNormal">-</div></div>
+    <div class="kpi"><div class="label">错误(4xx/5xx)</div><div class="value amber" id="kError">-</div></div>
+  </div>
+  <div class="grid">
+    <div class="card"><h3><span class="dot" style="background:var(--primary)"></span>请求趋势（近48小时）</h3><div class="chart" id="trendChart"></div></div>
+    <div class="card"><h3><span class="dot" style="background:var(--red)"></span>各站点请求分布</h3><div class="chart-sm" id="siteChart"></div></div>
+  </div>
+  <div class="grid">
+    <div class="card"><h3><span class="dot" style="background:var(--purple)"></span>规则命中分布（拦截有效/无效/放行）</h3><div class="chart-sm" id="ruleChart"></div></div>
+    <div class="card"><h3><span class="dot" style="background:var(--green)"></span>Top 20 来源国家</h3><div class="chart-sm" id="countryChart"></div></div>
+  </div>
+</div>
+
+<!-- ===== 地图页 ===== -->
+<div class="page" id="page-map">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">地图 · 攻击来源可视化</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">防火墙拦截与放行的来源在世界 / 中国地图上呈现，威胁从哪来一眼看清。</p>
+  </div>
+<div class="filters">
+    <select id="mapSite"><option value="">综合全部站点</option></select>
+    <select id="mapRule">
+      <option value="">全部请求</option>
+      <option value="blacklist_ua">仅拦截(UA黑名单)</option>
+      <option value="blacklist_uri">仅拦截(路径黑名单)</option>
+      <option value="whitelist_ua">白名单放行</option>
+      <option value="none">正常请求</option>
+    </select>
+    <button onclick="loadMap()">刷新</button>
+  </div>
+  <div class="map-tabs">
+    <button class="btn active" id="btnWorld" onclick="switchMap('world')">🌍 世界地图</button>
+    <button class="btn" id="btnChina" onclick="switchMap('china')">🇨🇳 中国地图</button>
+  </div>
+  <div class="card">
+    <h3 id="mapTitle">🌍 IP 来源世界地图</h3>
+    <div id="mapBox" style="position:relative;height:520px">
+      <div id="mapLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;z-index:1">地图加载中...</div>
+      <div class="chart" id="mapChart" style="height:520px"></div>
+    </div>
+    <div class="map-note">地图基于公开标准地理数据绘制。中国及世界地图中的中国边界均含台湾省、藏南、阿克塞钦、南海诸岛（九段线）等完整领土，符合《中华人民共和国测绘法》及相关规定。数据仅供运维报告参考。</div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>按国家/地区统计（Top 20）</h3><div class="chart-sm" id="mapCountryChart"></div></div>
+    <div class="card"><h3>Top 20 攻击/访问 IP</h3><div id="mapIpList"></div></div>
+  </div>
+</div>
+
+<!-- ===== 拦截明细页 ===== -->
+<div class="page" id="page-detail">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">拦截明细 · 全量请求记录</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">防火墙每一次拦截与放行都可追溯：时间、IP、规则、攻击类型、地理位置，有据可查。</p>
+  </div>
+<div class="filters">
+    <select id="dSite"><option value="">全部站点</option></select>
+    <select id="dRule">
+      <option value="">全部规则</option>
+      <option value="blacklist_ua">拦截-恶意UA</option>
+      <option value="blacklist_uri">拦截-恶意路径</option>
+      <option value="whitelist_ua">白名单放行</option>
+      <option value="none">正常请求</option>
+    </select>
+    <input id="dIp" placeholder="按IP筛选" style="width:140px">
+    <input id="dQ" placeholder="搜索URL/UA" style="width:180px">
+    <button onclick="loadDetail(1)">查询</button>
+  </div>
+  <div class="card">
+    <div style="max-height:600px;overflow:auto">
+      <table>
+        <thead><tr><th>时间</th><th>站点</th><th>规则</th><th>类型</th><th>IP</th><th>地理位置</th><th>方法</th><th>URL</th><th>状态</th><th>UA</th></tr></thead>
+        <tbody id="dBody"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span class="info" id="dTotal"></span>
+      <button id="dPrev" onclick="loadDetail(page-1)">上一页</button>
+      <span class="info" id="dPage"></span>
+      <button id="dNext" onclick="loadDetail(page+1)">下一页</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 站点页 ===== -->
+<div class="page" id="page-sites">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">站点 · 各站点流量分布</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">防火墙按站点统计请求、拦截与错误，每个 WordPress 网站的防护情况一目了然。</p>
+  </div>
+<div class="filters">
+    <div class="map-tabs" style="margin:0" id="sitesRangeTabs">
+      <button class="btn" onclick="setRange('sites','1h',this)">1小时</button>
+      <button class="btn active" onclick="setRange('sites','24h',this)">24h</button>
+      <button class="btn" onclick="setRange('sites','48h',this)">48h</button>
+      <button class="btn" onclick="setRange('sites','7d',this)">7天</button>
+      <button class="btn" onclick="setRange('sites','month',this)">月</button>
+      <button class="btn" onclick="setRange('sites','year',this)">年</button>
+      <button class="btn" onclick="setRange('sites','all',this)">全部</button>
+    </div>
+    <button class="refresh-btn" onclick="loadSites()">刷新</button>
+    <span style="color:var(--muted);font-size:13px" id="sitesTime"></span>
+  </div>
+  <div class="grid" id="sitesGrid"></div>
+</div>
+
+<!-- ===== 规则管理页 ===== -->
+<div class="page" id="page-rules">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">规则管理 · 防火墙黑白名单</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">图形化增删防火墙黑白名单，约 1 分钟生效，nginx 校验失败自动回滚，改错不伤网站。</p>
+  </div>
+<div class="grid">
+    <div class="card">
+      <h3>📋 当前生效规则</h3>
+      <div id="rulesList" style="font-size:13px;word-break:break-word;overflow-x:auto">加载中...</div>
+    </div>
+    <div class="card">
+      <h3>➕ 添加规则</h3>
+      <div class="rule-form">
+        <label>规则类型</label>
+        <select id="rType">
+          <option value="blacklist_ua">黑名单 - 恶意 User-Agent（拦截）</option>
+          <option value="blacklist_uri">黑名单 - 恶意路径（拦截）</option>
+          <option value="whitelist_ua">白名单 - 信任的 User-Agent（放行）</option>
+        </select>
+        <label>关键词（UA 片段 或 路径片段）</label>
+        <input id="rValue" placeholder="例：mybot / 或 /wp-login.php">
+        <div class="hint">
+          ⚠️ <b>使用说明（避免误伤）：</b><br>
+          · <b>黑名单</b> = 一旦命中即拦截（返回403）。只加<u>确定是攻击工具</u>的 UA/路径片段。<br>
+          · <b>白名单</b> = 命中即放行（不拦截）。用于放行<u>你信任的</u>爬虫/工具。<br>
+          · 关键词是<u>子串匹配</u>（含即命中）。<br>
+          · <b>不要</b>加普通浏览器 UA（如 Chrome/Mozilla）到黑名单，会拦截所有真实用户！<br>
+          · 规则写入后约 1 分钟内自动生效；nginx 校验失败自动不生效。
+        </div>
+        <button onclick="addRule()">添加规则</button>
+        <div id="ruleMsg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 优化状态页 ===== -->
+<div class="page" id="page-optim">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">优化状态 · 服务器健康与加速</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">防火墙防护之外，服务器资源、缓存加速、MySQL 数据库与系统安全巡检一站查看。</p>
+  </div>
+<div class="filters">
+    <span style="color:var(--muted);font-size:13px" id="optimTime"></span>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <h3><span class="dot" style="background:var(--green)"></span>服务器概览</h3>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;overflow-wrap:break-word" id="optimServerName">-</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:6px" id="ringRow"></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);border-top:1px dashed var(--border);padding-top:8px;line-height:1.8" id="osLine"></div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted);border-top:1px dashed var(--border);padding-top:8px" id="diskList"></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">PHP</div><div class="value" style="font-size:20px" id="optPhp">-</div></div>
+    <div class="kpi"><div class="label">OPcache</div><div class="value" id="optOpcacheKpi">-</div></div>
+    <div class="kpi"><div class="label">Memcached</div><div class="value" id="optMemcachedKpi">-</div></div>
+    <div class="kpi"><div class="label">Redis</div><div class="value" id="optRedisKpi">-</div></div>
+    <div class="kpi"><div class="label">Nginx</div><div class="value" id="optNginxKpi">-</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="dot" id="optOpcacheDot"></span>OPcache · PHP 字节码缓存 <button class="btn" style="margin-left:auto;padding:3px 10px;font-size:12px" onclick="flushCache('opcache')">清除</button></h3>
+      <div id="optOpcacheBody" style="font-size:13px">加载中...</div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" id="optMemcachedDot"></span>Memcached · 对象缓存（127.0.0.1:11211） <button class="btn" style="margin-left:auto;padding:3px 10px;font-size:12px" onclick="flushCache('memcached')">清除</button></h3>
+      <div id="optMemcachedBody" style="font-size:13px">加载中...</div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="dot" id="optRedisDot"></span>Redis · 对象缓存（127.0.0.1:6379） <button class="btn" style="margin-left:auto;padding:3px 10px;font-size:12px" onclick="flushCache('redis')">清除</button></h3>
+      <div id="optRedisBody" style="font-size:13px">加载中...</div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" id="optNetDot"></span>网络加速 · BBR / TCP</h3>
+      <div id="optNetBody" style="font-size:13px">加载中...</div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="dot" id="optNginxDot"></span>Nginx</h3>
+      <div id="optNginxBody" style="font-size:13px">加载中...</div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" id="optMysqlDot"></span>MySQL 数据库</h3>
+      <div id="optMysqlBody" style="font-size:13px">加载中...</div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="dot" id="optWafDot"></span>Nginx WAF 层防护</h3>
+      <div id="optWafBody" style="font-size:13px">加载中...</div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" id="optF2bDot"></span>fail2ban 防爆破</h3>
+      <div id="optF2bBody" style="font-size:13px">加载中...</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--primary)"></span>各站点自动发信状态</h3>
+    <div id="optMailBody" style="font-size:13px">加载中...</div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3><span class="dot" style="background:var(--amber)"></span>系统安全巡检</h3>
+    <div id="sysBody" style="font-size:13px">加载中...</div>
+  </div>
+</div>
+
+<div class="page" id="page-security">
+  <div style="margin-bottom:12px">
+    <h2 style="font-size:20px;font-weight:800">安全检测 · 防火墙纵深防御（Beta）</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">恶意文件扫描、WPScan 漏洞检测与系统安全巡检，与防火墙形成纵深防护。</p>
+  </div>
+<div class="filters">
+    <div class="map-tabs" style="margin:0" id="secTabs">
+      <button class="btn active" data-sec="report" onclick="secTab('report')">综合报告</button>
+      <button class="btn" data-sec="risk" onclick="secTab('risk')">安全风险扫描</button>
+      <button class="btn" data-sec="malware" onclick="secTab('malware')">恶意文件检测</button>
+      <button class="btn" data-sec="vuln" onclick="secTab('vuln')">网站漏洞检测</button>
+      <button class="btn" data-sec="server" onclick="secTab('server')">服务器安全检测</button>
+    </div>
+    <button onclick="loadSecurity()">刷新</button>
+  </div>
+  <div id="sec-report"></div>
+  <div id="sec-risk" style="display:none"></div>
+  <div id="sec-malware" style="display:none">
+
+  <div class="filters">
+    <span style="color:var(--muted);font-size:13px">恶意文件扫描 · 只检测不删除 · <b>每日 02:30 自动</b></span>
+    <select id="scanSite" onchange="loadScan()"><option value="">全部站点</option></select>
+    <button class="btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="runScanNow()">🔍 立刻检测</button>
+    <button onclick="loadScan()">刷新</button>
+    <span style="color:var(--muted);font-size:13px" id="scanTime"></span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">上次扫描</div><div class="value" style="font-size:18px" id="scanAt">-</div></div>
+    <div class="kpi"><div class="label">扫描文件</div><div class="value" id="scanFiles">-</div></div>
+    <div class="kpi"><div class="label" style="color:var(--red)">高危</div><div class="value red" id="scanHigh">-</div></div>
+    <div class="kpi"><div class="label" style="color:var(--amber)">中危</div><div class="value amber" id="scanMed">-</div></div>
+    <div class="kpi"><div class="label">低危</div><div class="value" id="scanLow">-</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <h3><span class="dot" style="background:var(--blue)"></span>病毒库信息</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:22px;font-size:13px;color:var(--muted)" id="virusInfo">
+      <span>引擎：-</span><span>病毒库版本：-</span><span>更新日期：-</span><span>高危规则：-</span><span>恶意特征：-</span><span>Webshell 标识：-</span><span>危险函数：-</span>
+    </div>
+    <details style="margin-top:8px;font-size:12.5px;color:var(--muted)">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue)">📚 参考开源项目与检测技术明细</summary>
+      <div style="margin-top:8px;line-height:1.9;background:#f8fafc;border-radius:6px;padding:10px 14px" id="virusDetail">加载中...</div>
+    </details>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--red)"></span>可疑文件</h3>
+    <div style="max-height:560px;overflow:auto">
+      <table>
+        <thead><tr><th>级别</th><th>站点</th><th>文件路径</th><th>命中特征</th><th>大小</th><th>修改时间</th><th>操作</th></tr></thead>
+        <tbody id="scanBody"></tbody>
+      </table>
+    </div>
+  </div>  </div>
+  <div id="sec-vuln" style="display:none">
+  <div id="wpscanBox"></div>
+</div>
+  <div id="sec-server" style="display:none"></div>
+</div>
+
+<script>
+const COLORS=['#343ced','#ff492c','#ff7e4c','#1d9e75','#8b5cf6','#0ea5e9','#f59e0b','#10b981','#ef4444','#3b82f6','#14b8a6','#f97316','#8b5cf6','#06b6d4','#84cc16','#ec4899','#6366f1','#22c55e','#eab308','#64748b'];
+let mapChart=null;
+let mapMode='world';
+let page=1, pageSize=200, pageTotal=0;
+
+// ===== 基础 =====
+async function api(path){
+  try{ const r=await fetch('/api.php?'+path); return await r.json(); }
+  catch(e){ console.error(e); return {}; }
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setSrv(label){
+  const el=document.getElementById('subInfo'); if(!el) return;
+  const m=String(label||'').match(/（([^）]+)）/);
+  const ip=m?m[1]:'';
+  el.innerHTML='<span class="srv">'+ip+'<span class="tip">'+esc(label||'')+' · WAF 防火墙 · WordPress 服务器安全运营</span></span>';
+  const ds=document.getElementById('drawerSrv');
+  if(ds){
+    const mm=String(label||'').match(/^(.+)\uFF08([^\uFF09]+)\uFF09(?: - \u5185\u90E8\u7F16\u53F7 (.+))?$/);
+    const host=mm?mm[1]:'', ip2=mm?mm[2]:'', no=mm&&mm[3]?mm[3]:'';
+    ds.innerHTML=(host?'主机名：'+esc(host)+'<br>':'')+(ip2?'IP：'+esc(ip2)+'<br>':'')+(no?'内部编号：'+esc(no):'')||(esc(label||''));
+  }
+}
+
+// ===== 时间范围状态 =====
+let rangeState = {ov:'24h', sites:'24h'};
+function setRange(page, rng, btn){
+  rangeState[page] = rng;
+  const tabs = document.getElementById(page+'RangeTabs');
+  if(tabs){ tabs.querySelectorAll('.btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  if(page==='ov') loadOverview();
+  if(page==='sites') loadSites();
+}
+
+// ===== Hash 路由 =====
+function parseHash(){
+  const h=location.hash.replace('#/','');
+  const pageMap={overview:'overview',map:'map',detail:'detail',rules:'rules',sites:'sites',optim:'optim',security:'security'};
+  return pageMap[h]||'overview';
+}
+function applyRoute(){
+  const cur=parseHash();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+cur).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active', t.getAttribute('href')==='#/'+cur));
+  if(cur==='overview') loadOverview();
+  if(cur==='map') setTimeout(()=>loadMap(),100);
+  if(cur==='detail') loadDetail(1);
+  if(cur==='rules') loadRules();
+  if(cur==='sites') loadSites();
+  if(cur==='optim') loadOptim();
+  if(cur==='security') loadSecurity();
+}
+window.addEventListener('hashchange', applyRoute);
+
+// ===== 概览 =====
+async function initSites(){
+  const s=await api('action=sites');
+  // 兼容：旧格式字符串数组 / 新格式 {site,type} 对象数组
+  const sites=(s.sites||[]).map(x=>typeof x==='string'?{site:x,type:''}:x);
+  for(const id of ['ovSite','mapSite','dSite']){
+    const sel=document.getElementById(id);
+    sel.innerHTML='<option value="">'+(id==='mapSite'?'综合全部站点':'全部站点')+'</option>';
+    sites.forEach(x=>sel.insertAdjacentHTML('beforeend',`<option value="${esc(x.site)}">${esc(x.site)}${x.type?(' ['+esc(x.type)+']'):''}</option>`));
+  }
+}
+async function loadOverview(){
+  fillRings(await api('action=optim'), 'ovRingRow', 'ovServerName');
+  const site=document.getElementById('ovSite').value;
+  const q=new URLSearchParams({action:'overview'}); if(site)q.set('site',site); if(rangeState.ov!=='all')q.set('range',rangeState.ov);
+  const d=await api(q.toString());
+  document.getElementById('kTotal').textContent=d.total||0;
+  const blocked=(d.by_rule||[]).filter(r=>r.rule==='blacklist_ua'||r.rule==='blacklist_uri').reduce((a,b)=>a+b.c,0);
+  const wl=(d.by_rule||[]).filter(r=>r.rule==='whitelist_ua').reduce((a,b)=>a+b.c,0);
+  const normal=(d.by_rule||[]).filter(r=>r.rule==='none').reduce((a,b)=>a+b.c,0);
+  document.getElementById('kBlocked').textContent=blocked;
+  document.getElementById('kWhite').textContent=wl;
+  document.getElementById('kNormal').textContent=normal;
+  document.getElementById('kError').textContent=d.error||0;
+  document.getElementById('ovTime').textContent='更新 '+new Date().toLocaleTimeString('zh-CN');
+  drawTrend((d.by_hour||[]).reverse());
+  drawSite(d.by_site||[]);
+  drawRule(d.by_rule||[]);
+  const q2=new URLSearchParams({action:'map'}); if(site)q2.set('site',site); if(rangeState.ov!=='all')q2.set('range',rangeState.ov);
+  const m=await api(q2.toString());
+  drawCountry((m.countries||[]).slice(0,20));
+}
+function drawTrend(data){
+  const el=document.getElementById('trendChart'); const ch=echarts.init(el);
+  ch.setOption({tooltip:{trigger:'axis'},grid:{left:40,right:20,top:20,bottom:30},
+    xAxis:{type:'category',data:data.map(x=>x.h.slice(11)),axisLabel:{fontSize:10}},
+    yAxis:{type:'value',minInterval:1},
+    series:[{type:'line',data:data.map(x=>x.c),smooth:true,areaStyle:{opacity:0.2},lineStyle:{color:'#343ced',width:2}}]});
+}
+function drawSite(data){
+  const el=document.getElementById('siteChart'); const ch=echarts.init(el);
+  ch.setOption({tooltip:{},grid:{left:100,right:30,top:10,bottom:20},
+    xAxis:{type:'value'},yAxis:{type:'category',data:data.map(x=>x.site).reverse()},
+    series:[{type:'bar',data:data.map(x=>x.c).reverse(),itemStyle:{color:'#343ced'}}]});
+}
+function drawRule(data){
+  const el=document.getElementById('ruleChart'); const ch=echarts.init(el);
+  const names={blacklist_ua:'拦截·恶意UA',blacklist_uri:'拦截·恶意路径',whitelist_ua:'白名单放行',none:'正常放行'};
+  const colors={blacklist_ua:'#ff492c',blacklist_uri:'#ff492c',whitelist_ua:'#1d9e75',none:'#6b7280'};
+  ch.setOption({tooltip:{formatter:function(p){return p.name+': '+p.value+' 次';}},
+    series:[{type:'pie',radius:['40%','70%'],data:data.map(x=>({name:names[x.rule]||x.rule,value:x.c,itemStyle:{color:colors[x.rule]||'#888'}}))}]});
+}
+function drawCountry(data){
+  const el=document.getElementById('countryChart'); const ch=echarts.init(el);
+  ch.setOption({tooltip:{},grid:{left:(window.innerWidth<=767?70:130),right:30,top:10,bottom:20},
+    xAxis:{type:'value'},yAxis:{type:'category',data:data.map(x=>(x.country_cn||x.country||'未知')).reverse(),axisLabel:{interval:0,fontSize:11}},
+    series:[{type:'bar',data:data.map(x=>x.c).reverse(),itemStyle:{color:'#1d9e75'}}]});
+}
+
+// ===== 地图 =====
+async function switchMap(mode){
+  mapMode=mode;
+  document.getElementById('btnWorld').classList.toggle('active', mode==='world');
+  document.getElementById('btnChina').classList.toggle('active', mode==='china');
+  document.getElementById('mapTitle').textContent = mode==='world'?'🌍 IP 来源世界地图':'🇨🇳 IP 来源中国地图';
+  if(mapChart){ mapChart.dispose(); mapChart=null; }
+  loadMap();
+}
+async function loadMap(){
+  if(!document.getElementById('page-map').classList.contains('active')) return;
+  const site=document.getElementById('mapSite').value;
+  const rule=document.getElementById('mapRule').value;
+  const q=new URLSearchParams({action:'map'}); if(site)q.set('site',site); if(rule)q.set('rule',rule);
+  const d=await api(q.toString());
+  let points=d.points||[];
+  // 中国地图模式：只显示中国境内 IP（合规地图范围内）
+  if(mapMode==='china'){ points = points.filter(p=>['CN','HK','MO','TW'].includes(p.country)); }
+  const mcEl=document.getElementById('mapChart');
+  if(!mapChart) mapChart=echarts.init(mcEl);
+  const srcData=points.filter(p=>p.lat&&p.lng).map(p=>({name:p.ip,value:[p.lng,p.lat,p.c],ip:p.ip,uri:p.uri,rule:p.rule,geo:(p.country_cn||'')+(p.city?' '+p.city:''),hasCity:!!p.city}));
+  let geoOpt, extraSeries=[];
+  if(mapMode==='china'){
+    // 确保 china 地图已注册（即使 world 分支已缓存 _chinaGeo，也要注册 china 地图）
+    if(!window._chinaGeo){
+      const r=await fetch('/lib/china.json'); window._chinaGeo=await r.json();
+    }
+    if(!echarts.getMap('china')) echarts.registerMap('china', window._chinaGeo);
+    geoOpt={map:'china',roam:true,itemStyle:{areaColor:'#e8eaf6',borderColor:'#c5cae9'},
+      regions:[{name:'中国',itemStyle:{areaColor:'#e8eaf6',borderColor:'rgba(100,116,139,0.25)',borderWidth:0.5}}]};
+  }else{
+    // 世界地图：加载合规世界地图（world_cn.json，China 已替换为 DataV 官方边界，含藏南/阿克塞钦/南海）
+    if(!window._worldCn){
+      const r=await fetch('/lib/world_cn.json');
+      window._worldCn=await r.json();
+      echarts.registerMap('world_cn', window._worldCn);
+    }
+    geoOpt={map:'world_cn',roam:true,zoom:1.2,itemStyle:{areaColor:'#e8eaf6',borderColor:'#c5cae9'},
+      regions:[{name:'China',itemStyle:{areaColor:'#fde68a',borderColor:'rgba(217,119,6,0.15)',borderWidth:0.4}}]};
+    // 南海九段线叠加（从 china.json 提取边界环）
+    if(!window._southLines){
+      if(!window._chinaGeo){
+        const r=await fetch('/lib/china.json'); window._chinaGeo=await r.json();
+      }
+      window._southLines=[];
+      (window._chinaGeo.features||[]).forEach(f=>{
+        if(f.properties && f.properties.adcode==='100000_JD'){
+          const walk=(c)=>{
+            if(Array.isArray(c) && c.length && Array.isArray(c[0]) && typeof c[0][0]==='number'){
+              window._southLines.push(c.map(pt=>[pt[0],pt[1]])); return;
+            }
+            if(Array.isArray(c)) c.forEach(x=>walk(x));
+          };
+          walk(f.geometry.coordinates);
+        }
+      });
+    }
+    if(window._southLines && window._southLines.length){
+      extraSeries.push({type:'lines',coordinateSystem:'geo',zlevel:2,silent:true,
+        data:window._southLines.map(coords=>({coords})),
+        lineStyle:{color:'#b91c1c',width:1,opacity:0.6},effect:{show:false}});
+    }
+  }
+  mapChart.setOption({
+    tooltip:{formatter:function(p){return '<b>'+esc(p.data.ip||'')+'</b><br>'+(p.data.hasCity?esc(p.data.geo):(esc(p.data.geo)+' · 国家级定位'))+'<br>请求数: '+(p.data.value?p.data.value[2]:'')+'<br>规则: '+esc(p.data.rule||'')+'<br>URL: '+esc(p.data.uri||'');}},
+    geo:geoOpt,
+    series:[{type:'scatter',coordinateSystem:'geo',data:srcData,
+      symbolSize:function(v){return Math.min(6+Math.sqrt(v[2])*1.2,26);},
+      itemStyle:{color:function(params){ return params.data.hasCity?'#ff492c':'rgba(59,130,246,0.5)'; },opacity:0.85}}].concat(extraSeries)
+  }, true);
+  if(mapChart) mapChart.resize();
+  const ml=document.getElementById('mapLoading'); if(ml) ml.style.display='none';
+  const el=document.getElementById('mapCountryChart'); const ch=echarts.getInstanceByDom(el)||echarts.init(el);
+  const countries=(d.countries||[]).slice(0,20);
+  ch.setOption({tooltip:{},grid:{left:(window.innerWidth<=767?70:150),right:30,top:10,bottom:20},
+    xAxis:{type:'value'},yAxis:{type:'category',data:countries.map(x=>(x.country_cn||x.country||'未知')).reverse(),axisLabel:{interval:0,fontSize:11}},
+    series:[{type:'bar',data:countries.map(x=>x.c).reverse(),itemStyle:{color:'#0ea5e9'}}]});
+  ch.resize();
+  const ips=(points||[]).slice(0,20);
+  const maxC=ips.length?ips[0].c:1;
+  document.getElementById('mapIpList').innerHTML=ips.map((p,i)=>{
+    const geo=(p.country_cn||p.country||'')+(p.city?' '+p.city:'');
+    const col=p.rule.startsWith('blacklist')?'#ff492c':COLORS[i%COLORS.length];
+    return `<div class="ip-item">
+      <span class="ip" title="${esc(p.ip)}">${esc(p.ip)}</span>
+      <span class="geo" title="${esc(geo)}">${esc(geo)||'未知'}</span>
+      <span class="bar"><div class="fill" style="width:${Math.min(p.c/maxC*100,100)}%;background:${col}"></div></span>
+      <span class="cnt">${p.c}</span>
+    </div>`;
+  }).join('')||'<div class="empty">暂无数据</div>';
+  setSrv(window.SRV_LABEL||'');
+}
+
+
+// ===== 请求类型识别（爬虫/攻击/嗅探/敏感路径/正常）=====
+function classifyRequest(r){
+  const ua=(r.ua||'').toLowerCase(), uri=(r.uri||'').toLowerCase();
+  // 白名单爬虫
+  if(r.rule==='whitelist_ua'){
+    if(ua.includes('bingbot')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">爬虫·Bing</span>';
+    if(ua.includes('googlebot')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">爬虫·Google</span>';
+    if(ua.includes('baiduspider')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">爬虫·百度</span>';
+    if(ua.includes('bytespider')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">爬虫·字节</span>';
+    if(ua.includes('sogou')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">爬虫·搜狗</span>';
+    if(ua.includes('yandex')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">爬虫·Yandex</span>';
+    if(ua.includes('claude')||ua.includes('anthropic')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">AI·Claude</span>';
+    if(ua.includes('gptbot')||ua.includes('chatgpt')||ua.includes('openai')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">AI·OpenAI</span>';
+    if(ua.includes('gptbot')) return '<span class="tag wl" style="background:#dbeafe;color:#1d4ed8">AI·GPT</span>';
+    return '<span class="tag wl">白名单爬虫</span>';
+  }
+  // 黑名单攻击
+  if(r.rule==='blacklist_ua'){
+    if(ua.includes('sqlmap')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">攻击·SQL注入扫描</span>';
+    if(ua.includes('nmap')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">嗅探·Nmap</span>';
+    if(ua.includes('nikto')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">攻击·Nikto扫描</span>';
+    if(ua.includes('wpscan')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">攻击·WP扫描</span>';
+    if(ua.includes('masscan')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">嗅探·Masscan</span>';
+    if(ua.includes('nessus')||ua.includes('acunetix')||ua.includes('openvas')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">漏洞扫描</span>';
+    if(ua.includes('dirbuster')||ua.includes('gobuster')||ua.includes('zgrab')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">目录枚举</span>';
+    if(ua.includes('wordfence')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">攻击·Wordfence</span>';
+    if(ua.includes('scrapy')||ua.includes('libwww')) return '<span class="tag blk-ua" style="background:#fecaca;color:#991b1b">爬虫·恶意</span>';
+    return '<span class="tag blk-ua">攻击UA</span>';
+  }
+  if(r.rule==='blacklist_uri'){
+    if(uri.includes('xmlrpc')) return '<span class="tag blk-uri" style="background:#fecaca;color:#991b1b">攻击·XML-RPC</span>';
+    if(uri.includes('wp-json/wp/v2/users')) return '<span class="tag blk-uri" style="background:#fecaca;color:#991b1b">攻击·用户枚举</span>';
+    if(uri.includes('wp-config')||uri.includes('.env')) return '<span class="tag blk-uri" style="background:#fecaca;color:#991b1b">攻击·敏感文件</span>';
+    if(uri.includes('phpmyadmin')) return '<span class="tag blk-uri" style="background:#fecaca;color:#991b1b">攻击·phpMyAdmin</span>';
+    if(uri.includes('wp-admin/setup-config')) return '<span class="tag blk-uri" style="background:#fecaca;color:#991b1b">攻击·WP安装</span>';
+    return '<span class="tag blk-uri">攻击路径</span>';
+  }
+  // 正常（none）但可疑：扫描特征
+  if(r.rule==='none'){
+    if(uri.includes('?s=') && (ua.includes('bot')||ua.includes('spider'))) return '<span class="tag" style="background:#fef3c7;color:#92400e">爬虫·搜索</span>';
+    if(uri.includes('?s=')) return '<span class="tag" style="background:#fef3c7;color:#92400e">搜索词</span>';
+    return '<span class="tag none">正常</span>';
+  }
+  return '<span class="tag none">正常</span>';
+}
+
+// ===== 明细分页 =====
+async function loadDetail(p){
+  page=Math.max(1,p);
+  const site=document.getElementById('dSite').value, rule=document.getElementById('dRule').value;
+  const ip=document.getElementById('dIp').value, q=document.getElementById('dQ').value;
+  const params=new URLSearchParams({action:'list',limit:String(pageSize),offset:String((page-1)*pageSize)});
+  if(site)params.set('site',site); if(rule)params.set('rule',rule);
+  if(ip)params.set('ip',ip); if(q)params.set('q',q);
+  const d=await api(params.toString());
+  const tb=document.getElementById('dBody');
+  if(!d.rows||!d.rows.length){ tb.innerHTML='<tr><td colspan="10" class="empty">暂无记录</td></tr>'; }
+  else{
+    const ruleTag={blacklist_ua:'<span class="tag blk-ua">恶意UA</span>',blacklist_uri:'<span class="tag blk-uri">恶意路径</span>',whitelist_ua:'<span class="tag wl">白名单</span>',none:'<span class="tag none">正常</span>'};
+    tb.innerHTML=d.rows.map(r=>`<tr>
+      <td class="mono">${esc(r.time)}</td>
+      <td>${esc(r.site)}</td>
+      <td>${ruleTag[r.rule]||esc(r.rule)}</td>
+      <td>${classifyRequest(r)}</td>
+      <td class="mono">${esc(r.ip)}</td>
+      <td style="color:var(--muted)">${esc(r.country_cn||r.country||'')}${r.city?' '+esc(r.city):''}</td>
+      <td>${esc(r.method)}</td>
+      <td class="mono" style="max-width:250px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.uri)}">${esc(r.uri)}</td>
+      <td>${esc(r.status)}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;color:var(--muted)" title="${esc(r.ua)}">${esc(r.ua)}</td>
+    </tr>`).join('');
+  }
+  pageTotal=d.total||0;
+  const pages=Math.max(1,Math.ceil(pageTotal/pageSize));
+  document.getElementById('dTotal').textContent='共 '+pageTotal+' 条';
+  document.getElementById('dPage').textContent='第 '+page+' / '+pages+' 页';
+  document.getElementById('dPrev').disabled = page<=1;
+  document.getElementById('dNext').disabled = page>=pages;
+}
+
+
+// ===== 站点页：每个站点一个卡片，基本数据 =====
+async function loadSites(){
+  document.getElementById('sitesTime').textContent='更新 '+new Date().toLocaleTimeString('zh-CN');
+  const grid=document.getElementById('sitesGrid');
+  // 站点列表
+  const s=await api('action=sites');
+  // 兼容：旧格式字符串数组 / 新格式 {site,type} 对象数组
+  const sites=(s.sites||[]).map(x=>typeof x==='string'?{site:x,type:''}:x);
+  if(!sites.length){ grid.innerHTML='<div class="empty">暂无站点数据</div>'; return; }
+  const typeLabel={'wordpress':'WordPress','static':'静态站','custom':'自定义应用','unknown':'未知类型'};
+  // 每个站点拉 overview（按 site 过滤）
+  const hl=await api('action=hotlink'); const hlMap=hl.items||{};
+  let html='';
+  for(const site of sites){
+    const q=new URLSearchParams({action:'overview',site:site.site}); if(rangeState.sites!=='all')q.set('range',rangeState.sites);
+    const d=await api(q.toString());
+    const blocked=(d.by_rule||[]).filter(r=>r.rule==='blacklist_ua'||r.rule==='blacklist_uri').reduce((a,b)=>a+b.c,0);
+    const wl=(d.by_rule||[]).filter(r=>r.rule==='whitelist_ua').reduce((a,b)=>a+b.c,0);
+    const normal=(d.by_rule||[]).filter(r=>r.rule==='none').reduce((a,b)=>a+b.c,0);
+    const typeTag=(site.type&&typeLabel[site.type])?` <span class="tag" style="background:var(--primary-soft);color:var(--primary);font-size:10px;vertical-align:middle">${typeLabel[site.type]}</span>`:'';
+    html+=`<div class="card" style="cursor:pointer" onclick="location.hash='#/detail';setTimeout(()=>{document.getElementById('dSite').value='${esc(site.site)}';loadDetail(1);},100)">
+      <h3>${esc(site.site)}${typeTag}</h3>
+      <div class="kpis" style="grid-template-columns:repeat(5,1fr);margin-bottom:10px">
+        <div class="kpi" style="padding:10px"><div class="label">总请求</div><div class="value" style="font-size:20px">${d.total||0}</div></div>
+        <div class="kpi" style="padding:10px"><div class="label" style="color:var(--red)">拦截</div><div class="value" style="font-size:20px;color:var(--red)">${blocked}</div></div>
+        <div class="kpi" style="padding:10px"><div class="label" style="color:var(--green)">白名单</div><div class="value" style="font-size:20px;color:var(--green)">${wl}</div></div>
+        <div class="kpi" style="padding:10px"><div class="label">正常</div><div class="value" style="font-size:20px">${normal}</div></div>
+        <div class="kpi" style="padding:10px"><div class="label" style="color:var(--amber)">错误4xx/5xx</div><div class="value" style="font-size:20px;color:var(--amber)">${d.error||0}</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:10px">
+        <span>防外链</span>
+        <button class="btn" style="padding:2px 10px;font-size:12px;${hlMap[site.site]?'background:var(--green);color:#fff;border-color:var(--green)':''}" onclick="event.stopPropagation();toggleHotlink('${esc(site.site)}')">${hlMap[site.site]?'已开启':'已关闭'}</button>
+        <span style="opacity:.8">点击查看该站点明细 →</span>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+
+// ===== 规则管理 =====
+async function loadRules(){
+  const d=await api('action=rules');
+  const main=d.main_config||'';
+  const user=d.user_config||'';
+  // 解析内置 + 用户规则
+  const groups={
+    whitelist_ua:{label:'白名单 UA（放行，搜索引擎/AI爬虫）',color:'#1d9e75',rules:[]},
+    blacklist_ua:{label:'黑名单 UA（拦截，扫描器/攻击工具）',color:'#ff492c',rules:[]},
+    blacklist_uri:{label:'黑名单 路径（拦截，攻击路径/敏感文件）',color:'#ff492c',rules:[]}
+  };
+  const parse=(cfg,prefix)=>{
+    for(const type of Object.keys(groups)){
+      const re=new RegExp('map \\$[^\{]+\\$'+type+' \{([^}]*)\}','s');
+      const m=cfg.match(re);
+      if(m){ m[1].split('\n').forEach(line=>{ const mm=line.match(/"\~\*\(([^)]+)\)" 1;/); if(mm) groups[type].rules.push({w:mm[1],src:prefix}); }); }
+    }
+  };
+  parse(main,'内置'); parse(user,'自定义');
+  // 分类说明
+  const typeHint={
+    whitelist_ua:{attack:'爬虫',desc:'搜索引擎/AI 爬虫，放行'},
+    blacklist_ua:{attack:'攻击/嗅探',desc:'安全扫描器/攻击工具，拦截'},
+    blacklist_uri:{attack:'攻击路径',desc:'恶意请求路径/敏感文件，拦截'}
+  };
+  let html='';
+  for(const type of Object.keys(groups)){
+    const g=groups[type];
+    html+=`<div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="width:10px;height:10px;border-radius:2px;background:${g.color};display:inline-block"></span>
+        <b style="color:${g.color}">${g.label}</b>
+        <span style="font-size:12px;color:var(--muted)">（${g.rules.length} 条）</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${typeHint[type].desc}</div>`;
+    if(g.rules.length){
+      // 按类型分类显示（攻击/嗅探/爬虫细分）
+      html+=`<div style="display:flex;flex-wrap:wrap;gap:4px">`;
+      g.rules.forEach(r=>{
+        const tag = type==='blacklist_ua' ? ruleUAType(r.w) : (type==='blacklist_uri' ? ruleUriType(r.w) : '');
+        html+=`<span class="tag" style="background:var(--primary-soft);color:var(--primary);margin:2px" title="${esc(r.w)}${tag?' · '+tag:''}">${esc(r.w)}<span style="opacity:0.6">${tag?' · '+tag:''}${r.src==='自定义'?' · '+esc(r.src):''}</span></span>`;
+      });
+      html+=`</div>`;
+    } else {
+      html+=`<span style="color:var(--muted)">（无）</span>`;
+    }
+    html+=`</div>`;
+  }
+  document.getElementById('rulesList').innerHTML=html;
+}
+// 规则关键词类型细分
+function ruleUAType(w){
+  const s=String(w).toLowerCase();
+  if(s.includes('sqlmap')||s.includes('sql')||s.includes('injection')) return 'SQL注入';
+  if(s.includes('nmap')||s.includes('masscan')||s.includes('scan')) return '嗅探';
+  if(s.includes('nikto')||s.includes('wpscan')||s.includes('acunetix')||s.includes('nessus')||s.includes('openvas')) return '漏洞扫描';
+  if(s.includes('dirbuster')||s.includes('gobuster')||s.includes('zgrab')||s.includes('dir')) return '目录枚举';
+  if(s.includes('libwww')||s.includes('scrapy')) return '恶意爬虫';
+  if(s.includes('wordfence')) return 'WP扫描';
+  return '攻击工具';
+}
+function ruleUriType(w){
+  const s=String(w).toLowerCase();
+  if(s.includes('xmlrpc')) return 'XML-RPC';
+  if(s.includes('wp-json')&&s.includes('users')) return '用户枚举';
+  if(s.includes('wp-config')||s.includes('.env')||s.includes('.git')) return '敏感文件';
+  if(s.includes('phpmyadmin')) return 'phpMyAdmin';
+  if(s.includes('uploads')&&s.includes('.php')) return '上传后门';
+  return '攻击路径';
+}
+
+async function addRule(){
+  const type=document.getElementById('rType').value;
+  const value=document.getElementById('rValue').value.trim();
+  const msg=document.getElementById('ruleMsg'); msg.className='msg';
+  if(!value){ msg.className='msg err'; msg.textContent='请输入关键词'; return; }
+  if(type.startsWith('blacklist') && /^(chrome|firefox|safari|mozilla|opera|edge|windows|macintosh|android|iphone|http)/i.test(value)){
+    msg.className='msg err'; msg.textContent='⚠️ 这看起来像正常浏览器/系统特征，加入黑名单会拦截真实用户！请确认后重试。'; return;
+  }
+  const r=await fetch('/api.php?action=rule_edit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,value})});
+  const d=await r.json();
+  if(d.ok){ msg.className='msg ok'; msg.textContent='✅ '+d.msg+'（约1分钟内生效）'; document.getElementById('rValue').value=''; loadRules(); }
+  else{ msg.className='msg err'; msg.textContent='❌ '+(d.error||'失败'); }
+}
+
+// ===== 优化状态 =====
+function fmtSize(n){ if(n==null)return '-'; const u=['B','KB','MB','GB']; let i=0; while(n>=1024&&i<u.length-1){n/=1024;i++;} return n.toFixed(n>=100||i===0?0:1)+' '+u[i]; }
+function fmtUptime(s){ if(!s)return '-'; const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60); return (d?d+'天':'')+(h?h+'时':'')+m+'分'; }
+function fmtUptimeSec(ts){ if(!ts)return '--'; let s=Math.max(0,Math.floor((Date.now()-ts)/1000)); const d=Math.floor(s/86400); s%=86400; const h=Math.floor(s/3600); s%=3600; const m=Math.floor(s/60); s%=60; return d+'天 '+String(h).padStart(2,'0')+'时 '+String(m).padStart(2,'0')+'分 '+String(s).padStart(2,'0')+'秒'; }
+function statusPill(ok,txt){ return ok?'<span class="tag" style="background:#d1fae5;color:#065f46">✅ '+txt+'</span>':'<span class="tag" style="background:#fee2e2;color:#b91c1c">⛔ '+txt+'</span>'; }
+function optRows(rows){ return rows.map(r=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed var(--border)"><span style="color:var(--muted)">${r[0]}</span><span class="mono" style="text-align:right">${r[1]}</span></div>`).join(''); }
+function optKpi(id,ok,txt){ const el=document.getElementById(id); el.textContent=txt; el.classList.remove('green','red'); el.classList.add(ok?'green':'red'); }
+function ringHTML(r){
+  const c=2*Math.PI*36, pct=Math.min(100, Math.max(0, r.pct||0));
+  return `<div style="text-align:center">
+    <svg viewBox="0 0 100 100" width="120" height="120">
+      <circle cx="50" cy="50" r="36" fill="none" stroke="var(--border)" stroke-width="11"/>
+      <circle cx="50" cy="50" r="36" fill="none" stroke="${r.color}" stroke-width="11" stroke-linecap="round"
+        stroke-dasharray="${(c*pct/100).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 50 50)"/>
+      <text x="50" y="47" text-anchor="middle" font-size="15" font-weight="700">${r.center}</text>
+      <text x="50" y="63" text-anchor="middle" font-size="9" fill="var(--muted)">${r.label}</text>
+    </svg>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.sub}</div>
+  </div>`;
+}
+
+async function flushCache(type, btn){
+  const names={opcache:'OPcache',memcached:'Memcached',redis:'Redis'};
+  const hint=type==='opcache'?'（仅清 PHP 字节码缓存，安全）':'（整机共享实例，会清掉所有站点对象缓存；仅缓存，不影响数据）';
+  if(!confirm('确定清除 '+names[type]+' 缓存吗？'+hint)) return;
+  if(btn){ btn.disabled=true; btn.textContent='清除中…'; }
+  try{
+    const r=await fetch('/api.php?action=cache_flush',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});
+    const d=await r.json();
+    alert(d.ok?('✅ '+d.msg):('❌ '+(d.msg||d.error||'失败')));
+  }catch(e){ alert('❌ 请求失败，请重试'); }
+  if(btn){ btn.disabled=false; btn.textContent='清除'; }
+  loadOptim();
+}
+async function loadScan(){
+  const st=document.getElementById('scanTime'); if(st) st.textContent='更新 '+new Date().toLocaleTimeString('zh-CN');
+  const d=await api('action=scan');
+  const s=d.summary||{};
+  document.getElementById('scanAt').textContent=(d.scanned_at||'-').slice(0,16);
+  document.getElementById('scanFiles').textContent=s.files_scanned??0;
+  document.getElementById('scanHigh').textContent=s.high??0;
+  document.getElementById('scanMed').textContent=s.medium??0;
+  document.getElementById('scanLow').textContent=s.low??0;
+  const vdb=d.virus_db||{};
+  const vi=document.getElementById('virusInfo');
+  if(vi) vi.innerHTML=`<span>引擎：${esc(vdb.engine||'-')}</span><span>病毒库版本：${esc(vdb.version||'-')}</span><span>更新日期：${esc(vdb.updated||'-')}</span><span>高危规则：${vdb.high_rules??0}</span><span>恶意特征：${vdb.known_bad??0}</span><span>Webshell 标识：${vdb.webshell_ids??0}</span><span>危险函数：${vdb.danger_funcs??0}</span>`;
+  const vd=document.getElementById('virusDetail');
+  if(vd) vd.innerHTML=`<b>参考开源项目：</b>${esc(vdb.refs||'-')}<br><b>检测技术：</b>${esc(vdb.tech||'-')}`;
+  const sel=document.getElementById('scanSite');
+  if(sel && sel.options.length<=1){
+    Object.keys(d.sites||{}).forEach(site=>sel.insertAdjacentHTML('beforeend',`<option value="${esc(site)}">${esc(site)}</option>`));
+  }
+  const selSite=sel?sel.value:'';
+  const tb=document.getElementById('scanBody');
+  const rows=[]; const lv={high:0,medium:1,low:2};
+  const sites=d.sites||{};
+  for(const site of Object.keys(sites)){
+    if(selSite && site!==selSite) continue;
+    for(const f of (sites[site].findings||[])) rows.push({site:site, ...f});
+  }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">暂无发现 · 扫描正常</td></tr>'; return; }
+  rows.sort((a,b)=>(lv[a.level]??3)-(lv[b.level]??3));
+  tb.innerHTML=rows.map(r=>{
+    const lvl={high:['高危','#fee2e2;color:#b91c1c'],medium:['中危','#fef3c7;color:#92400e'],low:['低危','#f1f5f9;color:#475569']}[r.level]||['?','#f1f5f9'];
+    return `<tr>
+      <td><span class="tag" style="background:${lvl[1]}">${lvl[0]}</span></td>
+      <td>${esc(r.site)}</td>
+      <td class="mono" style="max-width:340px;word-break:break-all" title="${esc(r.path)}">${esc(r.path)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc((r.matched||[]).join(' · '))}</td>
+      <td>${fmtSize(r.size)}</td>
+      <td class="mono" style="font-size:12px">${esc(r.mtime||'')}</td>
+      <td><button class="btn" style="padding:2px 10px;font-size:12px" onclick="wlFile('${esc(r.path)}')">标记误报</button></td>
+    </tr>`;
+  }).join('');
+}
+async function wlFile(path){
+  if(!confirm('把该文件加入白名单（下次扫描不再报告）？\n'+path)) return;
+  const r=await fetch('/api.php?action=scan_whitelist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:path,reason:'面板人工标记误报'})});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  loadScan();
+}
+
+async function loadVulns(){
+  const d=await api('action=vulns');
+  const items=d.items||[];
+  const tb=document.getElementById('vulnBody');
+  if(!items.length){ tb.innerHTML='<tr><td colspan="9" class="empty">暂无漏洞记录</td></tr>'; return; }
+  tb.innerHTML=items.map(v=>{
+    const lvl={critical:['严重','#fecaca;color:#991b1b'],high:['高危','#fee2e2;color:#b91c1c'],medium:['中危','#fef3c7;color:#92400e'],low:['低危','#f1f5f9;color:#475569']}[v.severity]||['?','#f1f5f9'];
+    const status=v.status==='fixed'?'<span class="tag" style="background:#d1fae5;color:#065f46">已修复</span>':'<span class="tag" style="background:#fee2e2;color:#b91c1c">未修复</span>';
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(v.detected_at||'-')}</td>
+      <td><b>${esc(v.name||'')}</b></td>
+      <td><span class="tag" style="background:${lvl[1]}">${lvl[0]}</span></td>
+      <td>${esc(v.site||'')}</td>
+      <td style="max-width:240px;color:var(--muted);font-size:12px">${esc(v.description||'')}</td>
+      <td class="mono" style="font-size:12px">${esc(v.fixed_at||'-')}</td>
+      <td style="max-width:200px;color:var(--muted);font-size:12px">${esc(v.fix_method||'')}</td>
+      <td>${status}</td>
+      <td style="white-space:nowrap"><button class="btn" style="padding:2px 8px;font-size:12px" onclick="editVuln(${v.id})">编辑</button> <button class="btn" style="padding:2px 8px;font-size:12px" onclick="delVuln(${v.id})">删除</button></td>
+    </tr>`;
+  }).join('');
+}
+function showVulnForm(){
+  document.getElementById('vulnForm').style.display='block';
+  document.getElementById('vulnFormTitle').textContent='添加漏洞';
+  delete document.getElementById('vulnForm').dataset.id;
+  ['vDetected','vName','vSite','vDesc','vFixed','vFixMethod'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('vSeverity').value='high';
+  document.getElementById('vStatus').value='open';
+  document.getElementById('vulnForm').scrollIntoView({behavior:'smooth'});
+}
+function hideVulnForm(){ document.getElementById('vulnForm').style.display='none'; }
+async function saveVuln(){
+  const item={ name:document.getElementById('vName').value.trim(), severity:document.getElementById('vSeverity').value, site:document.getElementById('vSite').value.trim(), description:document.getElementById('vDesc').value.trim(), detected_at:document.getElementById('vDetected').value.trim(), fixed_at:document.getElementById('vFixed').value.trim(), status:document.getElementById('vStatus').value, fix_method:document.getElementById('vFixMethod').value.trim() };
+  const id=document.getElementById('vulnForm').dataset.id;
+  if(id) item.id=parseInt(id);
+  if(!item.name){ alert('❌ 请填写漏洞名称'); return; }
+  const r=await fetch('/api.php?action=vuln_add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item})});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  hideVulnForm(); loadVulns();
+}
+async function editVuln(id){
+  const d=await api('action=vulns');
+  const v=(d.items||[]).find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('vulnForm').style.display='block';
+  document.getElementById('vulnForm').dataset.id=String(id);
+  document.getElementById('vulnFormTitle').textContent='编辑漏洞';
+  document.getElementById('vDetected').value=v.detected_at||'';
+  document.getElementById('vName').value=v.name||'';
+  document.getElementById('vSeverity').value=v.severity||'high';
+  document.getElementById('vSite').value=v.site||'';
+  document.getElementById('vDesc').value=v.description||'';
+  document.getElementById('vFixed').value=v.fixed_at||'';
+  document.getElementById('vStatus').value=v.status||'open';
+  document.getElementById('vFixMethod').value=v.fix_method||'';
+  document.getElementById('vulnForm').scrollIntoView({behavior:'smooth'});
+}
+async function delVuln(id){
+  if(!confirm('删除这条漏洞记录？')) return;
+  const r=await fetch('/api.php?action=vuln_del',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  loadVulns();
+}
+
+async function toggleHotlink(site){
+  const cur=await api('action=hotlink');
+  const now=!!((cur.items||{})[site]);
+  const enable=!now;
+  if(!confirm((enable?'开启':'关闭')+'「'+site+'」的防外链（防盗链，防止其他网站盗用图片/文件）？')) return;
+  const r=await fetch('/api.php?action=hotlink_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({site:site,enable:enable})});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  loadSites();
+}
+
+async function fillSys(){
+  const el=document.getElementById('sysBody'); if(!el) return;
+  const d=await api('action=syscheck');
+  const svc=d.services||{}, upd=d.updates||{}, ssh=d.ssh||{}, rk=d.rootkit||[];
+  const riskN=(ssh.risks||[]).length;
+  let h='<div style="margin-bottom:10px">';
+  h+= riskN?`<span class="tag" style="background:#fee2e2;color:#b91c1c">SSH 风险 ${riskN} 项</span>`:`<span class="tag" style="background:#d1fae5;color:#065f46">SSH 无风险</span>`;
+  h+= (d.fail2ban&&d.fail2ban.running)?' <span class="tag" style="background:#d1fae5;color:#065f46">fail2ban 运行中</span>':' <span class="tag" style="background:#fee2e2;color:#b91c1c">fail2ban 未运行</span>';
+  h+= rk.length?` <span class="tag" style="background:#fef3c7;color:#92400e">Rootkit 痕迹 ${rk.length} 条</span>`:' <span class="tag" style="background:#d1fae5;color:#065f46">无 Rootkit 痕迹</span>';
+  h+= '</div>';
+  h+= '<div style="color:var(--muted);font-size:12px;margin:6px 0 20px">巡检时间 '+esc(d.scanned_at||'-')+'</div>';
+  h+='<div id="sysGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:12.5px;color:var(--muted);line-height:1.9">';
+  h+='<div><b style="color:var(--ink)">关键软件版本</b><br>Nginx：'+esc((svc.nginx||'-').split('/')[0]+' '+(svc.nginx||'').split('nginx/')[1]||svc.nginx||'-')+'<br>PHP：'+esc((svc.php||'-'))+'<br>MySQL：'+esc((svc.mysql||'-'))+'<br>OpenSSH：'+esc((svc.openssh||'-'))+'</div>';
+  h+='<div><b style="color:var(--ink)">更新与端口</b><br>待装更新：'+esc(upd.pending_total||'-')+' · 安全更新：'+esc(upd.pending_security||'-')+'<br>SSH 端口：'+esc(ssh.port||'-')+' · 开放端口：'+esc((d.ports||[]).join(', ')||'-')+'</div>';
+  h+='<div><b style="color:var(--ink)">SSH 风险与 Rootkit 痕迹</b><br>'+(ssh.risks||[]).map(x=>'⚠ '+esc(x)).join('<br>')||'<span style="color:var(--green)">SSH 配置正常</span>';
+  if(rk.length){ h+='<br><span style="color:var(--amber)">痕迹：</span>'+rk.slice(0,6).map(x=>esc((x.type||'')+' '+(x.path||''))).join(' · ')+(rk.length>6?' · 等'+rk.length+'条':'')+'</div>'; }
+  else { h+='</div>'; }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+let secCur='report';
+function secTab(t){
+  secCur=t;
+  document.querySelectorAll('#secTabs .btn').forEach(b=>b.classList.toggle('active', b.getAttribute('data-sec')===t));
+  ['report','risk','malware','vuln','server'].forEach(x=>{ const el=document.getElementById('sec-'+x); if(el) el.style.display=(x===t?'block':'none'); });
+  if(t==='report') loadReport();
+  else if(t==='risk') loadRisk();
+  else if(t==='malware') loadScan();
+  else if(t==='vuln') loadWpscan();
+  else if(t==='server') loadServer();
+}
+async function loadSecurity(){ secTab(secCur); }
+async function loadReport(){
+  const el=document.getElementById('sec-report'); if(!el) return;
+  const [s,vs,sy]=await Promise.all([api('action=scan'),api('action=vuln_scan'),api('action=syscheck')]);
+  const sum=s.summary||{};
+  let openV=0, malVuln=0;
+  const vSites=(vs&&vs.sites)||{};
+  for(const site of Object.keys(vSites)){
+    for(const it of [...((vSites[site]||{}).plugins||[]), ...((vSites[site]||{}).themes||[])]){
+      openV += ((it.vulns||[]).length);
+    }
+  }
+  const sysRisks=(sy.ssh?.risks||[]).length+(sy.rootkit||[]).length;
+  const upd=sy.updates||{};
+  const malT=(sum.high??0)+(sum.medium??0)+(sum.low??0);
+  const kp=(label,count,level,go)=>{ const c=level==='red'?'#b91c1c':(level==='amber'?'#92400e':'#065f46'); return `<div class="kpi" style="cursor:pointer" onclick="secTab('${go}')" title="点击查看 ${label}"><div class="label">${label}</div><div class="value" style="font-size:22px;color:${c}">${count}</div></div>`; };
+  el.innerHTML=`<div class="kpis">
+    ${kp('恶意文件',malT,(sum.high>0?'red':(sum.medium>0?'amber':'green')),'malware')}
+    ${kp('未修复漏洞',openV,(openV>0?'red':'green'),'vuln')}
+    ${kp('系统风险',sysRisks,(sysRisks>0?'red':'green'),'risk')}
+    ${kp('安全更新',upd.pending_security||0,((upd.pending_security||0)>0?'amber':'green'),'risk')}
+    ${kp('待装更新',upd.pending_total||0,((upd.pending_total||0)>0?'amber':'green'),'risk')}
+  </div>
+  <div class="card"><h3>安全检测总览</h3><div style="font-size:13px;color:var(--muted);line-height:2">
+    恶意文件：高危 ${sum.high??0} / 中危 ${sum.medium??0} / 低危 ${sum.low??0}（扫描 ${sum.files_scanned??0} 文件）· 病毒库 v${esc((s.virus_db||{}).version||'-')}<br>
+    自动检测漏洞：${openV} 个受影响漏洞（WPScan 检测）<br>
+    系统风险：SSH ${(sy.ssh?.risks||[]).length} 项 + Rootkit 痕迹 ${(sy.rootkit||[]).length} 条<br>
+    更新：待装 ${upd.pending_total||0} 个，安全更新 ${upd.pending_security||0} 个<br>
+    fail2ban：${sy.fail2ban&&sy.fail2ban.running?'运行中':'未运行'} · 开放端口：${(sy.ports||[]).join(', ')||'-'} · 巡检 ${esc(sy.scanned_at||'-')}
+  </div></div>`;
+}
+async function loadRisk(){
+  const el=document.getElementById('sec-risk'); if(!el) return;
+  const sy=await api('action=syscheck');
+  const ssh=sy.ssh||{};
+  el.innerHTML=`<div class="card"><h3>🔍 安全风险扫描</h3><div style="font-size:13px;color:var(--muted);line-height:2;margin-top:8px">
+    <b>SSH 配置</b>：端口 ${esc(ssh.port||'-')} · PermitRootLogin ${esc(ssh.permit_root||'-')} · 密码认证 ${esc(ssh.password_auth||'-')}<br>
+    ${(ssh.risks||[]).map(x=>'⚠ <span style="color:var(--red)">'+esc(x)+'</span>').join('<br>')||'<span style="color:var(--green)">SSH 无风险</span>'}<br><br>
+    <b>开放端口</b>：${(sy.ports||[]).join(', ')||'-'}<br>
+    <b>待装更新</b>：${(sy.updates||{}).pending_total||0} 个，安全更新 ${(sy.updates||{}).pending_security||0} 个<br>
+    <b>fail2ban</b>：${sy.fail2ban&&sy.fail2ban.running?'<span style="color:var(--green)">运行中</span>':'<span style="color:var(--red)">未运行</span>'}<br>
+    <b>巡检时间</b>：${esc(sy.scanned_at||'-')}
+  </div></div>`;
+}
+async function loadServer(){
+  const el=document.getElementById('sec-server'); if(!el) return;
+  const sy=await api('action=syscheck');
+  const rk=sy.rootkit||[];
+  const svc=sy.services||{};
+  el.innerHTML=`<div class="card"><h3>🖥️ 服务器安全检测</h3><div style="font-size:13px;color:var(--muted);line-height:2;margin-top:8px">
+    <b>系统</b>：${esc(sy.os?.name||'')} · 内核 ${esc(sy.os?.kernel||'')}<br>
+    <b>关键软件</b>：Nginx ${esc(svc.nginx||'-')} · PHP ${esc((svc.php||'').split('(')[0]||'-')} · MySQL ${esc(svc.mysql||'-')} · OpenSSH ${esc(svc.openssh||'-')}<br><br>
+    <b>Rootkit / 异常痕迹</b>（${rk.length} 条，请核实来源）：<br>
+    ${rk.length?rk.map(x=>'<span style="color:var(--amber)">· '+(x.type||'')+' '+esc(x.path||'')+(x.detail?' — '+esc(String(x.detail).slice(0,60)):'')+'</span>').join('<br>'):'<span style="color:var(--green)">无</span>'}
+  </div></div>`;
+}
+
+async function loadWpscan(){
+  const el=document.getElementById('wpscanBox'); if(!el) return;
+  el.innerHTML='<div style="color:var(--muted);padding:10px">WPScan 配置加载中...</div>';
+  try{
+  let cfg={}, av={};
+  try{ cfg=await api('action=wpscan_config')||{}; }catch(e){}
+  try{ av=await api('action=vuln_scan')||{}; }catch(e){}
+  const use=cfg.today_count||0, limit=cfg.limit||25;
+  let h='<div class="card" style="margin-bottom:16px"><h3>🤖 WPScan 漏洞自动检测</h3>';
+  if(cfg.configured){
+    h+='<div style="font-size:13px;color:var(--muted);margin-top:6px">Token 已配置 · 今日已用 <b style="color:var(--primary)">'+use+'</b> / '+limit+' 次（免费额度）</div>';
+    h+='<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><input id="wpToken" placeholder="输入新 Token 更新" style="flex:1;min-width:220px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px"><button class="btn" onclick="saveWpscanToken()">更新</button><button class="btn" onclick="saveWpscanToken(true)">清除</button></div>';
+  } else {
+    h+='<div style="font-size:13px;color:var(--muted);margin-top:6px">未配置 WPScan API Token，无法检测插件漏洞。<a href="https://wpscan.com/api/" target="_blank" style="color:var(--blue)">点此注册免费 Token</a></div>';
+    h+='<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><input id="wpToken" placeholder="粘贴 WPScan API Token 并保存" style="flex:1;min-width:220px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px"><button class="btn" onclick="saveWpscanToken()">保存并启用</button></div>';
+  }
+  h+='<div style="margin-top:12px"><button class="btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="runVulnScan()">🔍 立即检测</button> <span style="color:var(--muted);font-size:12px">点击后约 1 分钟完成，扫描所有站点插件/主题漏洞</span></div>';
+  h+='</div>';
+  h+='<div class="card"><h3>🔎 自动检测结果</h3><div style="font-size:13px;margin-top:6px">'+renderAuto(av)+'</div></div>';
+  el.innerHTML=h;
+  }catch(err){
+    el.innerHTML='<div class="card"><h3>🤖 WPScan 漏洞自动检测</h3><div style="color:var(--red);font-size:13px;padding:12px">加载出错：'+esc(String((err&&err.message)||err))+'</div></div>';
+  }
+}
+async function runVulnScan(){
+  if(!confirm('立即运行 WPScan 漏洞检测？会消耗 API 额度，约 1 分钟完成。')) return;
+  const r=await fetch('/api.php?action=vuln_scan_run',{method:'POST'});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  loadWpscan();
+  setTimeout(loadWpscan, 65000);
+}
+
+function renderAuto(av){
+  if(!av || !av.sites || !av.token_configured) return '<span style="color:var(--muted)">未配置 Token 或未扫描。保存 Token 后运行每日自动扫描。</span>';
+  let h='', any=false, totalSkipped=0;
+  for(const site of Object.keys(av.sites)){
+    const info=av.sites[site]||{}, items=[...(info.plugins||[]), ...(info.themes||[])];
+    totalSkipped += (info.skipped_limit||0);
+    if(!items.length) continue;
+    any=true;
+    h+='<div style="margin-top:8px"><b>'+esc(site)+'</b>';
+    for(const it of items){
+      h+='<div style="margin:6px 0 6px 12px"><span class="tag" style="background:#fee2e2;color:#b91c1c">'+esc(it.slug)+' '+esc(it.version||'')+'</span> 存在 '+it.vulns.length+' 个受影响漏洞：';
+      h+=it.vulns.map(v=>'<span style="color:var(--muted)">'+esc(v.title||'')+'（修复于 '+esc(v.fixed_in||'?')+(v.cve&&v.cve.length?' · CVE:'+esc(v.cve.join(',')):'')+'）</span>').join('；');
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+  if(!any) h+='<span style="color:var(--green)">✓ 已扫描插件/主题均未发现受影响漏洞</span>';
+  if(av.usage) h+='<div style="color:var(--muted);margin-top:8px">检测时间 '+esc(av.scanned_at||'-')+' · 今日已用 '+av.usage.count+' 次 API（免费额度约 '+av.usage.limit+' 次/天）'+(totalSkipped?' · 有 '+totalSkipped+' 个因额度未扫':'')+(av.usage.note?' · '+esc(av.usage.note):'')+'</div>';
+  return h;
+}
+async function saveWpscanToken(clear){
+  const token=clear?'':document.getElementById('wpToken').value.trim();
+  const r=await fetch('/api.php?action=wpscan_config_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  loadWpscan();
+}
+
+function fillRings(d, ringId, nameId){
+  const el=document.getElementById(ringId); if(!el) return;
+  const cores=d.sys?.cpu?.cores||1;
+  const l1=parseFloat((d.sys?.load||'').split(' ')[0])||0;
+  const loadPct=Math.min(100,Math.round(l1/cores*100));
+  const mT=d.sys?.mem?.MemTotal||0, mAvail=d.sys?.mem?.MemAvailable||0;
+  const mUsed=Math.max(0,mT-mAvail), mPct=mT?Math.round(mUsed/mT*100):0;
+  const cpuPct=d.sys?.cpu_usage??0;
+  const dk=(d.sys?.disks||[]).find(x=>x.mount==='/')||(d.sys?.disks||[])[0]||{};
+  const diskPct=dk.total?Math.round(dk.used/dk.total*100):0;
+  const mSwT=d.sys?.mem?.SwapTotal||0, mSwF=d.sys?.mem?.SwapFree||0;
+  const swapTxt=mSwT?(' · Swap '+fmtSize(mSwF)+'/'+fmtSize(mSwT)):'';
+  const rings=[
+    {label:'负载', pct:loadPct, center:l1.toFixed(2), sub:'1分钟 · '+cores+' 核', color:'var(--amber)'},
+    {label:'CPU', pct:cpuPct, center:cpuPct+'%', sub:'实时采样', color:'var(--primary)'},
+    {label:'内存', pct:mPct, center:mPct+'%', sub:fmtSize(mUsed)+' / '+fmtSize(mT)+swapTxt, color:'var(--green)'},
+    {label:'磁盘', pct:diskPct, center:diskPct+'%', sub:fmtSize(dk.used||0)+' / '+fmtSize(dk.total||0), color:'var(--purple)'},
+  ];
+  el.innerHTML=rings.map(ringHTML).join('');
+  const nm=document.getElementById(nameId); if(nm && window.SRV_LABEL) nm.textContent=window.SRV_LABEL;
+}
+async function runScanNow(){
+  if(!confirm('立即运行恶意文件扫描？约 1 分钟完成。')) return;
+  const r=await fetch('/api.php?action=scan_run',{method:'POST'});
+  const d=await r.json();
+  alert(d.ok?('✅ '+d.msg):('❌ '+(d.error||'失败')));
+  loadScan();
+  setTimeout(loadScan, 65000);
+}
+
+async function loadOptim(){
+  fillSys();
+  document.getElementById('optimTime').textContent='更新 '+new Date().toLocaleTimeString('zh-CN');
+  const d=await api('action=optim');
+  const op=d.opcache||{}, mc=d.memcached||{}, rd=d.redis||{};
+  const srv=(window.SRV_LABEL||d.server_addr||'本机');
+  // optimTitle 已移除（页眉/页面标题已含服务器信息）
+  const t1=document.getElementById('optimServerName'); if(t1) t1.textContent=srv;
+  document.getElementById('optPhp').textContent=(d.php?.version||'-');
+  const ng=d.sys?.nginx||{}, net=d.sys?.net||{};
+  optKpi('optOpcacheKpi', !!op.enabled, op.enabled?'已启用':'未启用');
+  optKpi('optMemcachedKpi', !!mc.daemon, mc.daemon?'运行中':'未运行');
+  optKpi('optRedisKpi', !!rd.daemon, rd.daemon?'运行中':'未运行');
+  optKpi('optNginxKpi', !!ng.running, ng.running?'运行中':'停止');
+  document.getElementById('optOpcacheDot').style.background=op.enabled?'var(--green)':'var(--red)';
+  document.getElementById('optMemcachedDot').style.background=mc.daemon?'var(--green)':'var(--red)';
+  document.getElementById('optRedisDot').style.background=rd.daemon?'var(--green)':'var(--red)';
+  document.getElementById('optNginxDot').style.background=ng.running?'var(--green)':'var(--red)';
+  document.getElementById('optNetDot').style.background=net.bbr?'var(--green)':'var(--amber)';
+  fillRings(d, 'ringRow', 'optimServerName');
+  const os=d.sys?.os||{};
+  document.getElementById('osLine').innerHTML='🖥️ <b>'+esc(os.name||os.os||'')+'</b>'+(os.version?' '+os.version:'')+' · 内核 '+esc(os.kernel||'')+' · '+esc(os.arch||'')+' · 主机名 '+esc(os.hostname||'');
+  // 磁盘分区列表（多块盘逐行显示，参考宝塔面板）
+  const disks=d.sys?.disks||[];
+  let diskHtml='<div style="font-weight:600;margin-bottom:6px">💾 磁盘分区 ('+disks.length+' 块)</div>';
+  if(disks.length){
+    diskHtml+=disks.map(disk=>{
+      const t=disk.total||0, u=disk.used||0, pct=t?Math.round(u/t*100):0;
+      const color=pct>90?'var(--red)':(pct>75?'var(--amber)':'var(--green)');
+      return '<div style="margin-bottom:7px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;line-height:1.4">'+
+          '<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%">'+esc(disk.mount||'/')+'</span>'+
+          '<span style="white-space:nowrap">'+pct+'% · '+fmtSize(u)+' / '+fmtSize(t)+'</span>'+
+        '</div>'+
+        '<div style="margin-top:3px;height:6px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:4px"></div></div>'+
+      '</div>';
+    }).join('');
+  } else {
+    diskHtml+='<span style="color:var(--muted)">无磁盘数据</span>';
+  }
+  document.getElementById('diskList').innerHTML=diskHtml;
+  // OPcache
+  const memTotal=(op.memory_used||0)+(op.memory_free||0);
+  const memPct=memTotal?Math.round(op.memory_used/memTotal*100):0;
+  let h=`<div style="margin-bottom:8px">${statusPill(op.enabled,op.enabled?'已启用':'未启用')}${op.cache_full?' <span class="tag" style="background:#fef3c7;color:#92400e">⚠️ 缓存已满</span>':''}</div>`;
+  h+=`<div class="bar-row"><span class="name">内存占用 ${memPct}%</span><div class="bar"><div class="fill" style="width:${memPct}%;background:${memPct>80?'var(--red)':'var(--green)'}"></div></div><span class="cnt">${fmtSize(op.memory_used)}</span></div>`;
+  h+=optRows([
+    ['命中率',(op.hit_rate??'-')+'%'],
+    ['命中 / 未命中',(op.hits??0)+' / '+(op.misses??0)],
+    ['已缓存脚本',op.num_cached_scripts??'-'],
+    ['已缓存键',op.num_cached_keys??'-'],
+    ['内存上限',op.memory_consumption?op.memory_consumption+'M':'-'],
+    ['最大文件数',op.max_accelerated_files??'-'],
+    ['内存浪费',fmtSize(op.memory_wasted)+(op.wasted_percent?' ('+op.wasted_percent+'%)':'')],
+    ['文件变更检查',op.validate_timestamps?'开启':'关闭'],
+    ['重新验证周期',op.revalidate_freq!=null?op.revalidate_freq+'s':'-'],
+  ]);
+  document.getElementById('optOpcacheBody').innerHTML=h;
+  // Memcached（整台服务器共享实例，非单站点）
+  const mcSiteN=(d.sys&&d.sys.sites_mail&&d.sys.sites_mail.length)||0;
+  const memRows=[['共享范围','整台服务器（'+(mcSiteN?mcSiteN+' 站共用':'多站共用')+' 127.0.0.1:11211）'],['PHP 扩展',mc.php_ext?'已加载 ('+mc.php_ext+')':'未安装'],['服务状态',mc.daemon?'运行中':'未运行']];
+  if(mc.daemon){ memRows.push(['版本',mc.version||'-'],['运行时长',fmtUptime(mc.uptime)],['命中率',(mc.hit_rate??'-')+'%'],['命中 / 未命中',(mc.get_hits??0)+' / '+(mc.get_misses??0)],['当前连接',mc.curr_connections??0],['当前条目',mc.curr_items??0],['累计条目',mc.total_items??0],['驱逐 evictions',mc.evictions??0],['内存',fmtSize(mc.bytes)+' / '+fmtSize(mc.limit_maxbytes)],['get/set 累计',(mc.cmd_get??0)+' / '+(mc.cmd_set??0)],['当前使用',mc.php_ext?('已加载 '+mc.php_ext+' 扩展 · 站点对象缓存可用'):'PHP memcached 扩展未安装，站点当前未实际使用']); }
+  document.getElementById('optMemcachedBody').innerHTML=`<div style="margin-bottom:8px">${statusPill(mc.daemon,mc.daemon?'守护进程运行中':'未运行')}</div>`+optRows(memRows);
+  // Redis（整台服务器共享实例，指标与 Memcached 卡片对称）
+  const rdRows=[['共享范围','整台服务器（'+(mcSiteN?mcSiteN+' 站共用':'多站共用')+' 127.0.0.1:'+(rd.port||6379)+'）'],['PHP 扩展',rd.php_ext?'已加载 (redis)':'未安装'],['服务状态',rd.daemon?'运行中':'未运行']];
+  let rdBar='';
+  if(rd.daemon){
+    const rdMax=rd.maxmemory||0, rdUsed=rd.used_memory||0;
+    const rdPct=rdMax?Math.min(100,Math.round(rdUsed/rdMax*100)):0;
+    rdBar=`<div class="bar-row"><span class="name">内存占用 ${rdMax?rdPct+'%':'—'}</span><div class="bar"><div class="fill" style="width:${rdMax?rdPct:2}%;background:${rdPct>80?'var(--red)':'var(--green)'}"></div></div><span class="cnt">${rd.used_memory_human||fmtSize(rdUsed)}</span></div>`;
+    rdRows.push(
+      ['版本', (rd.version||'-')+(rd.mode?' · '+rd.mode:'')],
+      ['运行时长', fmtUptime(rd.uptime)],
+      ['命中率', (rd.hit_rate??'-')+'%'],
+      ['命中 / 未命中', (rd.keyspace_hits??0)+' / '+(rd.keyspace_misses??0)],
+      ['键总数', (rd.dbsize??0)+(rd.db_expires?'（含过期 '+(rd.db_expires)+'）':'')],
+      ['当前连接', (rd.connected_clients??0)+(rd.blocked_clients?'（阻塞 '+rd.blocked_clients+'）':'')],
+      ['内存上限', rd.maxmemory?fmtSize(rd.maxmemory):'未设置（不限）'],
+      ['峰值内存', rd.used_memory_peak_human||'-'],
+      ['内存碎片率', rd.mem_fragmentation_ratio||'-'],
+      ['淘汰策略', rd.maxmemory_policy||'-'],
+      ['过期 / 驱逐', (rd.expired_keys??0)+' / '+(rd.evicted_keys??0)],
+      ['累计连接', rd.total_connections_received??0],
+      ['累计命令', rd.total_commands_processed??0],
+      ['当前 QPS', rd.instantaneous_ops_per_sec??0],
+      ['持久化', (rd.aof_enabled?'AOF 开启':'AOF 关闭')],
+      ['当前使用', rd.php_ext?'已加载 redis 扩展 · 站点对象缓存可用':'PHP redis 扩展未安装，站点当前未实际使用']
+    );
+  }
+  document.getElementById('optRedisBody').innerHTML=`<div style="margin-bottom:8px">${statusPill(rd.daemon,rd.daemon?'守护进程运行中':'未运行')}</div>`+rdBar+optRows(rdRows);
+
+  // 网络加速（BBR/TCP）
+  const fo=net.tcp_fastopen;
+  const foTxt=fo===null||fo===undefined?'-':(fo==='0'?'关闭':(fo==='1'?'仅客户端':(fo==='2'?'仅服务端':'开启（双向）'))+' ('+fo+')');
+  let netH=`<div style="margin-bottom:8px">${statusPill(net.bbr,'BBR 已开启')} <span class="tag" style="background:${net.bbr?'#d1fae5;color:#065f46':'#fef3c7;color:#92400e'}">当前 ${net.tcp_congestion_control||'-'}</span></div>`;
+  netH+=optRows([
+    ['可用算法',net.available_cc||'-'],
+    ['TCP Fast Open',foTxt],
+    ['tcp_tw_reuse',net.tcp_tw_reuse==='1'?'开启':'关闭'],
+    ['tcp_syncookies',net.tcp_syncookies==='1'?'开启':'关闭'],
+    ['tcp_max_syn_backlog',net.tcp_max_syn_backlog||'-'],
+    ['somaxconn',net.somaxconn||'-'],
+    ['swappiness',net.swappiness||'-'],
+  ]);
+  document.getElementById('optNetBody').innerHTML=netH;
+  // Nginx
+  document.getElementById('optNginxBody').innerHTML=`<div style="margin-bottom:8px">${statusPill(ng.running,ng.running?'运行中':'未运行')}</div>`+optRows([
+    ['Master 进程',ng.master??0],
+    ['Worker 进程',ng.workers??0],
+    ['总进程数',ng.total??0],
+    ['版本',ng.server_software||'-'],
+    ['说明','面板本身由 Nginx 服务，能打开此页即代表 Nginx 正常'],
+  ]);
+  // 运行环境
+  const mem=d.sys?.mem||{}, up=d.sys?.uptime;
+  // 运行环境已移除（并入服务器概览）
+  // Nginx WAF 层防护
+  const waf=d.sys?.nginx_waf||{};
+  document.getElementById('optWafDot').style.background=waf.enabled?'var(--green)':'var(--red)';
+  let wafH=`<div style="margin-bottom:8px">${statusPill(waf.enabled,waf.enabled?'WAF 层已启用':'未启用')}</div>`+optRows([
+    ['已 include',waf.included?'是':'否'],
+    ['wp-login 限流',waf.wp_login_limit||'-'],
+    ['白名单 UA',waf.rules?.whitelist_ua??0],
+    ['黑名单 UA',waf.rules?.blacklist_ua??0],
+    ['黑名单 路径',waf.rules?.blacklist_uri??0],
+  ]);
+  const sw=waf.sites_waf||{};
+  wafH+=`<div style="margin-top:8px;font-size:12px;color:var(--muted)">站点接入：`+Object.entries(sw).map(([k,v])=>`<span class="tag" style="background:${v?'#d1fae5;color:#065f46':'#fee2e2;color:#b91c1c'};margin:2px">${esc(k)} ${v?'✓':'✗'}</span>`).join('')+`</div>`;
+  document.getElementById('optWafBody').innerHTML=wafH;
+  // fail2ban
+  const f2=d.sys?.fail2ban||{};
+  document.getElementById('optF2bDot').style.background=f2.running?'var(--green)':'var(--red)';
+  let f2H=`<div style="margin-bottom:8px">${statusPill(f2.running,f2.running?'运行中':'未运行')}`+(f2.banned_current!=null?` <span class="tag" style="background:#fee2e2;color:#b91c1c">当前封禁 ${f2.banned_current}</span> <span class="tag" style="background:#fef3c7;color:#92400e">累计 ${f2.banned_total}</span>`:'')+`</div>`;
+  if(f2.by_jail){ f2H+=optRows(Object.entries(f2.by_jail).map(([j,d])=>[j,'当前 '+d.current+' / 累计 '+d.total])); }
+  if(f2.error) f2H+=`<div style="color:var(--red);margin-top:6px;font-size:12px">⚠️ ${esc(f2.error)}</div>`;
+  document.getElementById('optF2bBody').innerHTML=f2H;
+  // 各站点自动发信状态（详细）
+  const sm=d.sys?.sites_mail||[];
+  const mgDetail='内容黑名单 35+ 词 · IP+收件人频率 1封/分钟 · 每日熔断 30 封 · 正文链接 ≤10';
+  const tags=(arr)=>((arr||[]).length?arr.map(t=>`<span class="tag" style="background:var(--primary-soft);color:var(--primary);margin:2px">${esc(t)}</span>`).join(''):'<span style="color:var(--muted)">—</span>');
+  const mailH=sm.map(x=>{
+    // 非 WP 站：发信检测不适用，显示类型徽章
+    if(x.type && x.type!=='wordpress'){
+      const tl={static:'静态站',custom:'自定义应用'}[x.type]||x.type;
+      return `<div style="padding:9px 0;border-bottom:1px dashed var(--border)">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <b style="min-width:76px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">${esc(x.site)}</b>
+          <span class="tag" style="background:#e0e7ff;color:#3730a3">${esc(tl)}</span>
+          <span style="font-size:12px;color:var(--muted)">非 WordPress，发信检测不适用 · WAF 拦截已生效</span>
+        </div>
+      </div>`;
+    }
+    const smtpOk=(x.smtp_plugins||[]).length>0;
+    return `<div style="padding:9px 0;border-bottom:1px dashed var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <b style="min-width:76px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">${esc(x.site)}</b>
+        ${statusPill(smtpOk,smtpOk?'发信已配置':'发信未配置')}
+        ${statusPill(x.mail_guard,x.mail_guard?'发信安全层已启用':'安全层未装')}
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:var(--muted);line-height:1.8">
+        <div>SMTP 插件：${tags(x.smtp_plugins)}</div>
+        <div>表单组件：${tags(x.forms)}</div>
+        <div>防垃圾手段：${tags(x.antispam)}</div>
+        ${x.mail_guard?'<div>发信安全层（WP Mail Guard）：'+mgDetail+'</div>':''}
+        ${x.mail_account?'<div>发信邮箱：<span style="font-family:ui-monospace,monospace;color:var(--primary)">'+esc(x.mail_account)+'</span></div>':''}
+      </div>
+    </div>`;
+  }).join('')||'<div class="empty">无数据</div>';
+  // MySQL 数据库
+  const syc=await api('action=syscheck');
+  const ms=((syc||{}).services)||{};
+  const mrun=(ms.mysql_running||'0')!=='0';
+  const mp=ms.mysql_params||{};
+  const mEl=document.getElementById('optMysqlBody');
+  if(mEl){
+    const md=document.getElementById('optMysqlDot'); if(md) md.style.background=mrun?'var(--green)':'var(--red)';
+    mEl.innerHTML=`<div style="margin-bottom:8px">${statusPill(mrun,mrun?'运行中':'未运行')}</div>`+optRows([
+      ['版本',ms.mysql||'-'],
+      ['端口',mp.port||'3306'],
+      ['数据目录大小',mp.datadir_size||'-'],
+      ['最大连接数',mp.max_connections||'-'],
+      ['InnoDB 缓冲池',mp.innodb_buffer||'-'],
+      ['说明','MySQL 数据库服务（来自系统巡检）'],
+    ]);
+  }
+  document.getElementById('optMailBody').innerHTML=mailH;
+}
+
+// ===== 登录记录弹窗 =====
+async function showLoginLog(){
+  const d=await api('action=login_log');
+  const rows=(d.log||[]);
+  document.getElementById('loginLogBody').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="mono">${esc(r.time||'')}</td>
+    <td class="mono">${esc(r.ip||'')}</td>
+    <td>${esc(r.country||'')}${r.city?' · '+esc(r.city):''}</td>
+    <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;color:var(--muted)" title="${esc(r.ua||'')}">${esc(r.ua||'')}</td>
+  </tr>`).join(''):'<tr><td colspan="4" class="empty">暂无登录记录</td></tr>';
+  document.getElementById('loginLogModal').style.display='flex';
+}
+function closeLoginLog(){ document.getElementById('loginLogModal').style.display='none'; }
+
+// 初始化
+(async function(){
+  // 登录态检查：未登录跳转登录页（手机浏览器友好的 cookie 登录）
+  try { const ck=await api('action=check'); if(!ck || !ck.authenticated){ location.href='/login.php'; return; } } catch(e){ location.href='/login.php'; return; }
+  let _srv='', _bootTs=0;
+  try { const vd=await api('action=version'); const v='v'+(vd.version||'?'); const pv=document.getElementById('panelVer'); if(pv) pv.textContent=v; const fv=document.getElementById('footVer'); if(fv) fv.textContent=v+' '; window.SRV_LABEL=_srv=vd.server_label||''; if(vd.uptime>0){ _bootTs=Date.now()-Math.floor(vd.uptime*1000); } } catch(e){}
+  setSrv(_srv);
+  const _upEl=()=>{ const el=document.getElementById('upTime'); if(el){ el.textContent='⏱ 已运行 '+fmtUptimeSec(_bootTs); } const du=document.getElementById('drawerUp'); if(du){ du.textContent='⏱ 已运行 '+fmtUptimeSec(_bootTs); } };
+  _upEl(); setInterval(_upEl,1000);
+  await initSites();
+  applyRoute();
+  setInterval(()=>{ const c=parseHash(); if(c==='overview')loadOverview(); if(c==='detail')loadDetail(page); }, 20000);
+})();
+
+// ===== 手机菜单 =====
+function toggleMenu(){
+  const d=document.getElementById('drawer'), b=document.getElementById('drawerBackdrop');
+  if(!d) return;
+  const open=d.classList.toggle('open');
+  if(b) b.classList.toggle('open', open);
+  document.body.classList.toggle('menu-open', open);
+  const mb=document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded', String(open));
+}
+function closeMenu(){
+  const d=document.getElementById('drawer'), b=document.getElementById('drawerBackdrop');
+  if(d) d.classList.remove('open');
+  if(b) b.classList.remove('open');
+  document.body.classList.remove('menu-open');
+  const mb=document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded','false');
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeMenu(); });
+// 图表随窗口缩放
+window.addEventListener('resize', ()=>{ document.querySelectorAll('.chart,.chart-sm').forEach(el=>{ const ch=echarts.getInstanceByDom(el); if(ch) ch.resize(); }); });
+
+</script>
+<div id="loginLogModal" class="modal-mask" style="display:none">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3>🕒 管理员登录记录</h3>
+      <button class="btn" onclick="closeLoginLog()">✕ 关闭</button>
+    </div>
+    <div style="max-height:58vh;overflow:auto;flex:1">
+      <table>
+        <thead><tr><th>时间</th><th>IP</th><th>位置</th><th>UA</th></tr></thead>
+        <tbody id="loginLogBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<footer class="site-footer">🛡️ WAF 防火墙 · 安全运营面板 <span id="footVer"></span> · 专为 WordPress 服务器打造 · © 2026 TTTWorks</footer>
+</body>
+</html>
