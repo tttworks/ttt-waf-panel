@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 /**
- * 定制安全运维面板 · 登录页（替代 HTTP Basic Auth，手机浏览器友好）
+ * 超方 WAF 防火墙 · 安全运营面板 · 登录页（替代 HTTP Basic Auth，手机浏览器友好）
  * 密码来源：/www/wwwroot/wafpanel/panel.passwd（bcrypt，password_verify）
  * 登录成功：生成随机 token 写入 sessions/ 目录 + setcookie('waf_token', ...) 7 天有效
  * 登出：/login.php?logout
