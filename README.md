@@ -1,4 +1,4 @@
-# ttt-waf-panel
+# ttt-waf-panel · 超方WAF安全监控面板
 
 > **为 WordPress 服务器打造的 nginx 层 WAF + 安全运营面板**
 > 零外部依赖 · 零侵入 · 不误伤真人 · **兼容宝塔**
